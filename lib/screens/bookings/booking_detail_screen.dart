@@ -5,7 +5,9 @@ import '../../core/api_exception.dart';
 import '../../core/formatters.dart';
 import '../../core/theme.dart';
 import '../../models/booking.dart';
+import '../../models/review.dart';
 import '../../repositories/booking_repository.dart';
+import '../../repositories/review_repository.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_badge.dart';
@@ -166,9 +168,159 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 ],
                 PrimaryButton(label: 'Bayar Sekarang', isLoading: _isPaying, onPressed: _pay),
               ],
+              if (booking.status == 'completed') ...[
+                const SizedBox(height: 24),
+                const Text('Ulasan Kamu', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+                const SizedBox(height: 12),
+                if (booking.review != null)
+                  _ReviewDisplay(review: booking.review!)
+                else
+                  _ReviewForm(
+                    bookingId: booking.id,
+                    onSubmitted: (review) => setState(() => booking.review = review),
+                  ),
+              ],
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ReviewDisplay extends StatelessWidget {
+  const _ReviewDisplay({required this.review});
+
+  final Review review;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: List.generate(
+              5,
+              (i) => Icon(
+                i < review.rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                size: 20,
+                color: AppColors.warning,
+              ),
+            ),
+          ),
+          if (review.comment != null && review.comment!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(review.comment!, style: const TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ReviewForm extends StatefulWidget {
+  const _ReviewForm({required this.bookingId, required this.onSubmitted});
+
+  final int bookingId;
+  final ValueChanged<Review> onSubmitted;
+
+  @override
+  State<_ReviewForm> createState() => _ReviewFormState();
+}
+
+class _ReviewFormState extends State<_ReviewForm> {
+  final _repository = ReviewRepository();
+  final _commentController = TextEditingController();
+
+  int _rating = 0;
+  bool _isSubmitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_rating == 0) {
+      setState(() => _error = 'Pilih rating dulu ya.');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
+
+    try {
+      final review = await _repository.submit(
+        bookingId: widget.bookingId,
+        rating: _rating,
+        comment: _commentController.text.trim(),
+      );
+      widget.onSubmitted(review);
+    } on ApiException catch (error) {
+      setState(() => _error = error.message);
+    } catch (_) {
+      setState(() => _error = 'Gagal mengirim ulasan. Coba lagi.');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Gimana pengalaman main kamu?', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+          const SizedBox(height: 10),
+          Row(
+            children: List.generate(5, (i) {
+              final starIndex = i + 1;
+              return InkWell(
+                onTap: () => setState(() => _rating = starIndex),
+                customBorder: const CircleBorder(),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    starIndex <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    size: 30,
+                    color: AppColors.warning,
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _commentController,
+            maxLines: 3,
+            style: const TextStyle(color: AppColors.text),
+            decoration: const InputDecoration(labelText: 'Komentar (opsional)'),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+          ],
+          const SizedBox(height: 12),
+          PrimaryButton(label: 'Kirim Ulasan', isLoading: _isSubmitting, onPressed: _submit),
+        ],
       ),
     );
   }

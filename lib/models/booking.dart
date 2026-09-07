@@ -1,4 +1,5 @@
 import '../core/formatters.dart';
+import 'review.dart';
 
 class Booking {
   final int id;
@@ -16,6 +17,7 @@ class Booking {
   final double payableAmount;
   final String? promoCode;
   final String? notes;
+  Review? review;
 
   Booking({
     required this.id,
@@ -33,6 +35,7 @@ class Booking {
     required this.payableAmount,
     this.promoCode,
     this.notes,
+    this.review,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
@@ -56,6 +59,7 @@ class Booking {
       payableAmount: (json['payable_amount'] as num?)?.toDouble() ?? 0,
       promoCode: promotion?['code'] as String?,
       notes: json['notes'] as String?,
+      review: json['review'] != null ? Review.fromJson(json['review'] as Map<String, dynamic>) : null,
     );
   }
 
@@ -76,4 +80,5 @@ class Booking {
   String get statusLabel => _statusLabels[status] ?? status;
   String get paymentStatusLabel => _paymentLabels[paymentStatus] ?? paymentStatus;
   bool get needsPayment => paymentStatus != 'paid' && status != 'cancelled';
+  bool get canReview => status == 'completed' && review == null;
 }
