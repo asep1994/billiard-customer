@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/theme.dart';
-import '../../providers/auth_provider.dart';
+import '../../repositories/auth_repository.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/primary_button.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _repository = AuthRepository();
 
   bool _isSubmitting = false;
   String? _formError;
@@ -26,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _phoneController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -38,16 +36,15 @@ class _LoginScreenState extends State<LoginScreen> {
       _formError = null;
     });
 
+    final phone = _phoneController.text.trim();
+
     try {
-      await context.read<AuthProvider>().login(
-            phone: _phoneController.text.trim(),
-            password: _passwordController.text,
-          );
-      if (mounted) context.go('/home');
+      await _repository.forgotPassword(phone);
+      if (mounted) context.push('/reset-password', extra: phone);
     } on ApiException catch (error) {
       setState(() => _formError = error.message);
     } catch (_) {
-      setState(() => _formError = 'Gagal masuk. Coba lagi.');
+      setState(() => _formError = 'Gagal mengirim kode. Coba lagi.');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -57,24 +54,26 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
+      appBar: AppBar(backgroundColor: AppColors.bg),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Center(child: AppLogo(size: 80)),
+                const Center(child: AppLogo(size: 72)),
                 const SizedBox(height: 20),
                 const Text(
-                  'Selamat Datang',
+                  'Lupa Password',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.text),
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Masuk untuk booking meja billiard favoritmu',
+                  'Masukkan nomor HP kamu. Kalau akunmu punya email terdaftar, '
+                  'kami kirim kode reset password ke sana.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.textMuted),
                 ),
@@ -98,34 +97,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: const InputDecoration(labelText: 'Nomor HP', hintText: '081234567890'),
                   validator: (value) => (value == null || value.trim().isEmpty) ? 'Nomor HP wajib diisi' : null,
                 ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  style: const TextStyle(color: AppColors.text),
-                  decoration: const InputDecoration(labelText: 'Password'),
-                  validator: (value) => (value == null || value.isEmpty) ? 'Password wajib diisi' : null,
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => context.push('/forgot-password'),
-                    child: const Text('Lupa Password?'),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                PrimaryButton(label: 'Masuk', isLoading: _isSubmitting, onPressed: _submit),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Belum punya akun?', style: TextStyle(color: AppColors.textMuted)),
-                    TextButton(
-                      onPressed: () => context.push('/register'),
-                      child: const Text('Daftar'),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 24),
+                PrimaryButton(label: 'Kirim Kode', isLoading: _isSubmitting, onPressed: _submit),
               ],
             ),
           ),

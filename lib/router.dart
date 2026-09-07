@@ -2,8 +2,10 @@ import 'package:go_router/go_router.dart';
 
 import 'models/billiard_table.dart';
 import 'models/venue.dart';
+import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
 import 'screens/booking/pilih_meja_screen.dart';
 import 'screens/booking/pilih_tanggal_jam_screen.dart';
 import 'screens/booking/ringkasan_booking_screen.dart';
@@ -28,6 +30,11 @@ final router = GoRouter(
     GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+    GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) => ResetPasswordScreen(phone: state.extra as String),
+    ),
     GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
     GoRoute(path: '/promotions', builder: (context, state) => const PromotionsScreen()),
     GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
