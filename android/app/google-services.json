@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "320755177330",
+    "project_id": "billiard-unity",
+    "storage_bucket": "billiard-unity.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320755177330:android:a59d6699cf90a789dbafeb",
+        "android_client_info": {
+          "package_name": "com.unitybilliard.billiard_customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKpCIw7jb9_c0T6ZOW91E9fTQRXfMY82I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
+import 'core/push_notification_service.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
 import 'router.dart';
@@ -9,6 +10,7 @@ import 'router.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID');
+  await PushNotificationService.instance.initialize();
   runApp(const BilliardCustomerApp());
 }
 

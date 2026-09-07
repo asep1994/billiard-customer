@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../core/api_client.dart';
+import '../core/push_notification_service.dart';
 import '../core/storage.dart';
 import '../models/customer_account.dart';
 
@@ -32,6 +35,7 @@ class AuthProvider extends ChangeNotifier {
       final response = await _api.get('/customer/me');
       customer = CustomerAccount.fromJson(response['data'] as Map<String, dynamic>);
       status = AuthStatus.authenticated;
+      unawaited(PushNotificationService.instance.registerToken());
     } catch (_) {
       await _storage.clear();
       status = AuthStatus.unauthenticated;
@@ -48,6 +52,7 @@ class AuthProvider extends ChangeNotifier {
     await _storage.save(response['token'] as String);
     customer = CustomerAccount.fromJson(response['customer'] as Map<String, dynamic>);
     status = AuthStatus.authenticated;
+    unawaited(PushNotificationService.instance.registerToken());
     notifyListeners();
   }
 
@@ -68,10 +73,13 @@ class AuthProvider extends ChangeNotifier {
     await _storage.save(response['token'] as String);
     customer = CustomerAccount.fromJson(response['customer'] as Map<String, dynamic>);
     status = AuthStatus.authenticated;
+    unawaited(PushNotificationService.instance.registerToken());
     notifyListeners();
   }
 
   Future<void> logout() async {
+    await PushNotificationService.instance.unregisterToken();
+
     try {
       await _api.post('/customer/logout');
     } catch (_) {
