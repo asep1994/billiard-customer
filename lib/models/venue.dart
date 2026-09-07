@@ -20,6 +20,8 @@ class Venue {
   final int reviewsCount;
   final double? priceFrom;
   bool isFavorited;
+  final String? description;
+  final List<String> facilities;
   final List<BilliardTable> tables;
 
   Venue({
@@ -41,6 +43,8 @@ class Venue {
     this.reviewsCount = 0,
     this.priceFrom,
     this.isFavorited = false,
+    this.description,
+    this.facilities = const [],
     this.tables = const [],
   });
 
@@ -67,6 +71,8 @@ class Venue {
       reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
       priceFrom: (json['price_from'] as num?)?.toDouble(),
       isFavorited: json['is_favorited'] as bool? ?? false,
+      description: json['description'] as String?,
+      facilities: (json['facilities'] as List<dynamic>? ?? []).map((e) => e.toString()).toList(),
       tables: (tablesJson ?? [])
           .whereType<Map<String, dynamic>>()
           .map(BilliardTable.fromJson)

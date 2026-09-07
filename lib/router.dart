@@ -1,10 +1,13 @@
 import 'package:go_router/go_router.dart';
 
+import 'models/billiard_table.dart';
 import 'models/booking.dart';
+import 'models/venue.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/booking/booking_screen.dart';
 import 'screens/booking/booking_success_screen.dart';
+import 'screens/booking/pilih_meja_screen.dart';
+import 'screens/booking/pilih_waktu_screen.dart';
 import 'screens/bookings/booking_detail_screen.dart';
 import 'screens/home/home_shell.dart';
 import 'screens/onboarding/onboarding_screen.dart';
@@ -33,7 +36,18 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/venues/:id/book',
-      builder: (context, state) => BookingScreen(venueId: int.parse(state.pathParameters['id']!)),
+      builder: (context, state) => PilihMejaScreen(venueId: int.parse(state.pathParameters['id']!)),
+    ),
+    GoRoute(
+      path: '/venues/:id/book/time',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return PilihWaktuScreen(
+          venue: extra['venue'] as Venue,
+          table: extra['table'] as BilliardTable,
+          date: extra['date'] as DateTime,
+        );
+      },
     ),
     GoRoute(
       path: '/booking-success',

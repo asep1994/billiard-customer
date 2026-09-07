@@ -16,6 +16,7 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
   final _exploreKey = GlobalKey<ExploreTabState>();
+  final _bookingsKey = GlobalKey<MyBookingsTabState>();
   final _favoritesKey = GlobalKey<FavoritesTabState>();
 
   void _goToExplore(ExploreQuickFilter filter) {
@@ -26,13 +27,14 @@ class _HomeShellState extends State<HomeShell> {
   late final _tabs = [
     HomeTab(onQuickFilter: _goToExplore),
     ExploreTab(key: _exploreKey),
-    const MyBookingsTab(),
+    MyBookingsTab(key: _bookingsKey),
     FavoritesTab(key: _favoritesKey),
     const ProfileTab(),
   ];
 
   void _onTabTap(int value) {
     setState(() => _index = value);
+    if (value == 2) _bookingsKey.currentState?.reload();
     if (value == 3) _favoritesKey.currentState?.reload();
   }
 

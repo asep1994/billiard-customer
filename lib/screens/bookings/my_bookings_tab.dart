@@ -13,10 +13,10 @@ class MyBookingsTab extends StatefulWidget {
   const MyBookingsTab({super.key});
 
   @override
-  State<MyBookingsTab> createState() => _MyBookingsTabState();
+  State<MyBookingsTab> createState() => MyBookingsTabState();
 }
 
-class _MyBookingsTabState extends State<MyBookingsTab> {
+class MyBookingsTabState extends State<MyBookingsTab> {
   final _repository = BookingRepository();
   late Future<List<Booking>> _future;
 
@@ -25,6 +25,12 @@ class _MyBookingsTabState extends State<MyBookingsTab> {
     super.initState();
     _future = _repository.myBookings();
   }
+
+  /// Called by HomeShell whenever this tab is selected - HomeShell's
+  /// IndexedStack keeps every tab alive after its first build, so without
+  /// this a booking made elsewhere (e.g. just after checkout) would never
+  /// show up here until the app restarts.
+  void reload() => _refresh();
 
   Future<void> _refresh() async {
     setState(() {
