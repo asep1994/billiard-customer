@@ -86,7 +86,7 @@ class _PilihMejaScreenState extends State<PilihMejaScreen> {
     if (_selectedTableId == null || _venue == null) return;
 
     final table = _venue!.tables.firstWhere((t) => t.id == _selectedTableId);
-    context.push('/venues/${widget.venueId}/book/time', extra: {
+    context.push('/venues/${widget.venueId}/book/schedule', extra: {
       'venue': _venue,
       'table': table,
       'date': _date,

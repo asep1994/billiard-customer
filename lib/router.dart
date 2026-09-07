@@ -1,13 +1,12 @@
 import 'package:go_router/go_router.dart';
 
 import 'models/billiard_table.dart';
-import 'models/booking.dart';
 import 'models/venue.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'screens/booking/booking_success_screen.dart';
 import 'screens/booking/pilih_meja_screen.dart';
-import 'screens/booking/pilih_waktu_screen.dart';
+import 'screens/booking/pilih_tanggal_jam_screen.dart';
+import 'screens/booking/ringkasan_booking_screen.dart';
 import 'screens/bookings/booking_detail_screen.dart';
 import 'screens/home/home_shell.dart';
 import 'screens/onboarding/onboarding_screen.dart';
@@ -39,10 +38,10 @@ final router = GoRouter(
       builder: (context, state) => PilihMejaScreen(venueId: int.parse(state.pathParameters['id']!)),
     ),
     GoRoute(
-      path: '/venues/:id/book/time',
+      path: '/venues/:id/book/schedule',
       builder: (context, state) {
         final extra = state.extra as Map<String, dynamic>;
-        return PilihWaktuScreen(
+        return PilihTanggalJamScreen(
           venue: extra['venue'] as Venue,
           table: extra['table'] as BilliardTable,
           date: extra['date'] as DateTime,
@@ -50,8 +49,18 @@ final router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/booking-success',
-      builder: (context, state) => BookingSuccessScreen(booking: state.extra as Booking),
+      path: '/venues/:id/book/summary',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return RingkasanBookingScreen(
+          venue: extra['venue'] as Venue,
+          table: extra['table'] as BilliardTable,
+          date: extra['date'] as DateTime,
+          startHour: extra['startHour'] as int,
+          duration: extra['duration'] as int,
+          price: extra['price'] as double,
+        );
+      },
     ),
     GoRoute(
       path: '/bookings/:id',

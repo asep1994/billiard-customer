@@ -12,6 +12,7 @@ class Booking {
   final String paymentStatus;
   final double totalPrice;
   final double discountAmount;
+  final double serviceFee;
   final double payableAmount;
   final String? promoCode;
   final String? notes;
@@ -28,6 +29,7 @@ class Booking {
     required this.paymentStatus,
     required this.totalPrice,
     required this.discountAmount,
+    required this.serviceFee,
     required this.payableAmount,
     this.promoCode,
     this.notes,
@@ -50,6 +52,7 @@ class Booking {
       paymentStatus: json['payment_status'] as String,
       totalPrice: double.tryParse(json['total_price'].toString()) ?? 0,
       discountAmount: double.tryParse(json['discount_amount'].toString()) ?? 0,
+      serviceFee: double.tryParse(json['service_fee'].toString()) ?? 0,
       payableAmount: (json['payable_amount'] as num?)?.toDouble() ?? 0,
       promoCode: promotion?['code'] as String?,
       notes: json['notes'] as String?,
