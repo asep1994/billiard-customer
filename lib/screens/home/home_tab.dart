@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api_exception.dart';
+import '../../core/location_service.dart';
 import '../../core/theme.dart';
 import '../../models/venue.dart';
 import '../../repositories/venue_repository.dart';
+import '../../widgets/eight_ball_icon.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/venue_card.dart';
+import '../explore/explore_tab.dart';
 
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key});
+  const HomeTab({super.key, required this.onQuickFilter});
+
+  /// Switches HomeShell to the Jelajah tab and applies the given filter -
+  /// owned by HomeShell since it holds the GlobalKey to ExploreTab's state.
+  final void Function(ExploreQuickFilter filter) onQuickFilter;
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -17,105 +24,297 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   final _repository = VenueRepository();
-  final _searchController = TextEditingController();
+  final _locationService = LocationService();
 
   late Future<List<Venue>> _future;
 
   @override
   void initState() {
     super.initState();
-    _future = _repository.browse();
+    _future = _loadRecommendations();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  Future<List<Venue>> _loadRecommendations() async {
+    final position = await _locationService.getCurrentPosition();
+    final venues = await _repository.browse(lat: position?.latitude, lng: position?.longitude);
+    return venues.take(6).toList();
   }
 
-  void _search() {
-    setState(() => _future = _repository.browse(search: _searchController.text.trim()));
-  }
+  void _reload() => setState(() {
+        _future = _loadRecommendations();
+      });
 
-  Future<void> _refresh() async {
-    setState(() => _future = _repository.browse(search: _searchController.text.trim()));
-    await _future;
+  Future<void> _toggleFavorite(Venue venue) async {
+    setState(() => venue.isFavorited = !venue.isFavorited);
+    try {
+      if (venue.isFavorited) {
+        await _repository.addFavorite(venue.id);
+      } else {
+        await _repository.removeFavorite(venue.id);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => venue.isFavorited = !venue.isFavorited);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          _reload();
+          await _future;
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          children: [
+            _Header(onSearchTap: () => widget.onQuickFilter(ExploreQuickFilter.none)),
+            const SizedBox(height: 16),
+            const _HeroBanner(),
+            const SizedBox(height: 20),
+            _QuickActions(onQuickFilter: widget.onQuickFilter),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Cari venue billiard',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.text),
+                  'Rekomendasi untuk kamu',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text),
                 ),
-                const SizedBox(height: 4),
-                const Text('Temukan tempat main terdekat dari kamu', style: TextStyle(color: AppColors.textMuted)),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _searchController,
-                  style: const TextStyle(color: AppColors.text),
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (_) => _search(),
-                  decoration: InputDecoration(
-                    hintText: 'Cari nama venue atau kota...',
-                    prefixIcon: const Icon(Icons.search, color: AppColors.textFaint),
-                    suffixIcon: IconButton(icon: const Icon(Icons.arrow_forward), onPressed: _search),
-                  ),
+                TextButton(
+                  onPressed: () => widget.onQuickFilter(ExploreQuickFilter.none),
+                  child: const Text('Lihat Semua', style: TextStyle(fontSize: 13)),
                 ),
               ],
             ),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refresh,
-              child: FutureBuilder<List<Venue>>(
-                future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingView();
-                  }
-                  if (snapshot.hasError) {
-                    final message = snapshot.error is ApiException
-                        ? (snapshot.error as ApiException).message
-                        : 'Gagal memuat venue.';
-                    return ListView(children: [ErrorView(message: message, onRetry: _search)]);
-                  }
-
-                  final venues = snapshot.data ?? [];
-                  if (venues.isEmpty) {
-                    return ListView(
-                      children: const [EmptyView(message: 'Tidak ada venue ditemukan.', icon: Icons.search_off)],
-                    );
-                  }
-
-                  return GridView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 0.78,
-                    ),
-                    itemCount: venues.length,
-                    itemBuilder: (context, index) {
-                      final venue = venues[index];
-                      return VenueCard(venue: venue, onTap: () => context.push('/venues/${venue.id}'));
-                    },
+            const SizedBox(height: 8),
+            FutureBuilder<List<Venue>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: LoadingView(),
                   );
-                },
+                }
+                if (snapshot.hasError) {
+                  final message = snapshot.error is ApiException
+                      ? (snapshot.error as ApiException).message
+                      : 'Gagal memuat venue.';
+                  return ErrorView(message: message, onRetry: _reload);
+                }
+
+                final venues = snapshot.data ?? [];
+                if (venues.isEmpty) {
+                  return const EmptyView(message: 'Belum ada venue di sekitarmu.', icon: Icons.search_off);
+                }
+
+                return Column(
+                  children: [
+                    for (final venue in venues) ...[
+                      VenueCard(
+                        venue: venue,
+                        onTap: () => context.push('/venues/${venue.id}'),
+                        onFavoriteToggle: () => _toggleFavorite(venue),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({required this.onSearchTap});
+
+  final VoidCallback onSearchTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.location_on, size: 18, color: AppColors.primary),
+            const SizedBox(width: 6),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text('Bandung, Jawa Barat', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 13)),
+                      Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.textFaint),
+                    ],
+                  ),
+                  Text('Lokasi Anda', style: TextStyle(color: AppColors.textFaint, fontSize: 11)),
+                ],
+              ),
+            ),
+            const _NotificationBell(),
+          ],
+        ),
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: onSearchTap,
+          child: AbsorbPointer(
+            child: TextField(
+              style: const TextStyle(color: AppColors.text),
+              decoration: const InputDecoration(
+                hintText: 'Cari tempat billiard...',
+                prefixIcon: Icon(Icons.search, color: AppColors.textFaint),
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NotificationBell extends StatelessWidget {
+  const _NotificationBell();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(Icons.notifications_outlined, size: 18, color: AppColors.textMuted),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeroBanner extends StatelessWidget {
+  const _HeroBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primarySoft, AppColors.surface],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Main Billiard Lebih\nMudah Bersama Unity',
+                  style: TextStyle(color: AppColors.text, fontSize: 18, fontWeight: FontWeight.bold, height: 1.25),
+                ),
+                SizedBox(height: 8),
+                Text('Temukan, Pesan, Main!', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          const EightBallIcon(size: 64),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({required this.onQuickFilter});
+
+  final void Function(ExploreQuickFilter filter) onQuickFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _QuickActionButton(
+          icon: Icons.location_on,
+          label: 'Venue\nTerdekat',
+          highlighted: true,
+          onTap: () => onQuickFilter(ExploreQuickFilter.nearest),
+        ),
+        _QuickActionButton(
+          icon: Icons.local_offer_outlined,
+          label: 'Promo\nSpesial',
+          onTap: () => context.push('/promotions'),
+        ),
+        _QuickActionButton(
+          icon: Icons.star_border_rounded,
+          label: 'Rating\nTertinggi',
+          onTap: () => onQuickFilter(ExploreQuickFilter.topRated),
+        ),
+        _QuickActionButton(
+          icon: Icons.access_time,
+          label: 'Buka\nSekarang',
+          onTap: () => onQuickFilter(ExploreQuickFilter.openNow),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickActionButton extends StatelessWidget {
+  const _QuickActionButton({required this.icon, required this.label, required this.onTap, this.highlighted = false});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool highlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: highlighted ? AppColors.primary : AppColors.surface,
+                shape: BoxShape.circle,
+                border: highlighted ? null : Border.all(color: AppColors.border),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, color: highlighted ? Colors.black : AppColors.textMuted, size: 22),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w500, height: 1.2),
+            ),
+          ],
+        ),
       ),
     );
   }

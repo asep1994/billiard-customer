@@ -13,6 +13,16 @@ String _defaultBaseUrl() {
   return 'http://localhost:8000/api/v1';
 }
 
+/// The backend serializes file URLs (venue photos, etc.) using its own
+/// `APP_URL`, which is `http://localhost:8000` in local dev - correct for a
+/// browser hitting the admin dashboard, but unreachable from the Android
+/// emulator for the same reason the API base URL needs the `10.0.2.2` alias
+/// above. Every displayed media URL should be passed through this first.
+String resolveMediaUrl(String url) {
+  if (Platform.isAndroid) return url.replaceFirst('localhost', '10.0.2.2');
+  return url;
+}
+
 /// Thin Dio wrapper: attaches the customer's bearer token to every request
 /// and translates Laravel's error JSON into an [ApiException].
 class ApiClient {

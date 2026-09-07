@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../bookings/my_bookings_tab.dart';
+import '../explore/explore_tab.dart';
+import '../favorites/favorites_tab.dart';
 import '../profile/profile_tab.dart';
 import 'home_tab.dart';
 
@@ -13,12 +15,26 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
+  final _exploreKey = GlobalKey<ExploreTabState>();
+  final _favoritesKey = GlobalKey<FavoritesTabState>();
 
-  static const _tabs = [
-    HomeTab(),
-    MyBookingsTab(),
-    ProfileTab(),
+  void _goToExplore(ExploreQuickFilter filter) {
+    _exploreKey.currentState?.applyFilter(filter);
+    setState(() => _index = 1);
+  }
+
+  late final _tabs = [
+    HomeTab(onQuickFilter: _goToExplore),
+    ExploreTab(key: _exploreKey),
+    const MyBookingsTab(),
+    FavoritesTab(key: _favoritesKey),
+    const ProfileTab(),
   ];
+
+  void _onTabTap(int value) {
+    setState(() => _index = value);
+    if (value == 3) _favoritesKey.currentState?.reload();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,14 +42,17 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(index: _index, children: _tabs),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
-        onTap: (value) => setState(() => _index = value),
+        onTap: _onTabTap,
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Beranda'),
+          BottomNavigationBarItem(icon: Icon(Icons.explore_outlined), activeIcon: Icon(Icons.explore), label: 'Jelajah'),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),
             activeIcon: Icon(Icons.calendar_today),
-            label: 'Booking Saya',
+            label: 'Booking',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite_border), activeIcon: Icon(Icons.favorite), label: 'Favorit'),
           BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profil'),
         ],
       ),

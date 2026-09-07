@@ -8,6 +8,7 @@ import 'screens/booking/booking_success_screen.dart';
 import 'screens/bookings/booking_detail_screen.dart';
 import 'screens/home/home_shell.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/promotions/promotions_screen.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/venue/venue_detail_screen.dart';
 
@@ -25,6 +26,7 @@ final router = GoRouter(
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
     GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
+    GoRoute(path: '/promotions', builder: (context, state) => const PromotionsScreen()),
     GoRoute(
       path: '/venues/:id',
       builder: (context, state) => VenueDetailScreen(venueId: int.parse(state.pathParameters['id']!)),

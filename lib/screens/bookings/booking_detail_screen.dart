@@ -82,7 +82,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           if (snapshot.hasError || !snapshot.hasData) {
             final message =
                 snapshot.error is ApiException ? (snapshot.error as ApiException).message : 'Gagal memuat booking.';
-            return ErrorView(message: message, onRetry: () => setState(() => _future = _repository.show(widget.bookingId)));
+            return ErrorView(
+              message: message,
+              onRetry: () => setState(() {
+                _future = _repository.show(widget.bookingId);
+              }),
+            );
           }
 
           final booking = snapshot.data!;

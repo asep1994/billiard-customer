@@ -9,6 +9,36 @@ import '../../repositories/venue_repository.dart';
 import '../../widgets/eight_ball_icon.dart';
 import '../../widgets/state_views.dart';
 
+class _VenueCover extends StatelessWidget {
+  const _VenueCover({required this.photoUrl});
+
+  final String? photoUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 140,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primarySoft, AppColors.surface],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: photoUrl != null
+          ? Image.network(
+              photoUrl!,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              errorBuilder: (context, error, stackTrace) => const Center(child: EightBallIcon(size: 72)),
+            )
+          : const Center(child: EightBallIcon(size: 72)),
+    );
+  }
+}
+
 class VenueDetailScreen extends StatefulWidget {
   const VenueDetailScreen({super.key, required this.venueId});
 
@@ -28,6 +58,20 @@ class _VenueDetailScreenState extends State<VenueDetailScreen> {
     _future = _repository.show(widget.venueId);
   }
 
+  Future<void> _toggleFavorite(Venue venue) async {
+    setState(() => venue.isFavorited = !venue.isFavorited);
+    try {
+      if (venue.isFavorited) {
+        await _repository.addFavorite(venue.id);
+      } else {
+        await _repository.removeFavorite(venue.id);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => venue.isFavorited = !venue.isFavorited);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +86,12 @@ class _VenueDetailScreenState extends State<VenueDetailScreen> {
           if (snapshot.hasError || !snapshot.hasData) {
             final message =
                 snapshot.error is ApiException ? (snapshot.error as ApiException).message : 'Gagal memuat venue.';
-            return ErrorView(message: message, onRetry: () => setState(() => _future = _repository.show(widget.venueId)));
+            return ErrorView(
+              message: message,
+              onRetry: () => setState(() {
+                _future = _repository.show(widget.venueId);
+              }),
+            );
           }
 
           final venue = snapshot.data!;
@@ -53,23 +102,46 @@ class _VenueDetailScreenState extends State<VenueDetailScreen> {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    Container(
-                      height: 140,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.primarySoft, AppColors.surface],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Center(child: EightBallIcon(size: 72)),
-                    ),
+                    _VenueCover(photoUrl: venue.photoUrl),
                     const SizedBox(height: 16),
-                    Text(venue.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.text)),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            venue.name,
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.text),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _toggleFavorite(venue),
+                          icon: Icon(
+                            venue.isFavorited ? Icons.favorite : Icons.favorite_border,
+                            color: venue.isFavorited ? AppColors.danger : AppColors.textFaint,
+                          ),
+                        ),
+                      ],
+                    ),
                     if (venue.vendorName != null) ...[
                       const SizedBox(height: 4),
                       Text('oleh ${venue.vendorName}', style: const TextStyle(color: AppColors.textFaint, fontSize: 13)),
+                    ],
+                    if (venue.rating != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.star_rounded, size: 18, color: AppColors.warning),
+                          const SizedBox(width: 4),
+                          Text(
+                            venue.rating!.toStringAsFixed(1),
+                            style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            ' (${venue.reviewsCount} ulasan)',
+                            style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ],
                     const SizedBox(height: 16),
                     _InfoRow(icon: Icons.location_on_outlined, text: venue.address ?? venue.city ?? '-'),

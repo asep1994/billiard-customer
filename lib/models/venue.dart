@@ -1,3 +1,4 @@
+import '../core/api_client.dart';
 import 'billiard_table.dart';
 
 class Venue {
@@ -11,6 +12,14 @@ class Venue {
   final String? openingTime;
   final String? closingTime;
   final String status;
+  final double? latitude;
+  final double? longitude;
+  final double? distanceKm;
+  final String? photoUrl;
+  final double? rating;
+  final int reviewsCount;
+  final double? priceFrom;
+  bool isFavorited;
   final List<BilliardTable> tables;
 
   Venue({
@@ -24,6 +33,14 @@ class Venue {
     this.openingTime,
     this.closingTime,
     required this.status,
+    this.latitude,
+    this.longitude,
+    this.distanceKm,
+    this.photoUrl,
+    this.rating,
+    this.reviewsCount = 0,
+    this.priceFrom,
+    this.isFavorited = false,
     this.tables = const [],
   });
 
@@ -42,6 +59,14 @@ class Venue {
       openingTime: json['opening_time'] as String?,
       closingTime: json['closing_time'] as String?,
       status: json['status'] as String? ?? 'active',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      distanceKm: (json['distance_km'] as num?)?.toDouble(),
+      photoUrl: (json['photo_url'] as String?) != null ? resolveMediaUrl(json['photo_url'] as String) : null,
+      rating: (json['rating'] as num?)?.toDouble(),
+      reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
+      priceFrom: (json['price_from'] as num?)?.toDouble(),
+      isFavorited: json['is_favorited'] as bool? ?? false,
       tables: (tablesJson ?? [])
           .whereType<Map<String, dynamic>>()
           .map(BilliardTable.fromJson)

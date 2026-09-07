@@ -27,7 +27,9 @@ class _MyBookingsTabState extends State<MyBookingsTab> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = _repository.myBookings());
+    setState(() {
+      _future = _repository.myBookings();
+    });
     await _future;
   }
 
