@@ -53,6 +53,19 @@ DateTime jakartaWallClockToApiInstant(DateTime date, int hour, int minute) {
   return DateTime.utc(date.year, date.month, date.day, hour - 7, minute);
 }
 
+/// A short "X menit/jam/hari lalu" label for recent timestamps, falling back
+/// to [formatDate] once it's more than a week old. `dateTime` must already be
+/// in Jakarta wall-clock form (e.g. via [parseApiTimestamp]).
+String formatRelativeTime(DateTime dateTime) {
+  final diff = nowInJakarta().difference(dateTime);
+
+  if (diff.inMinutes < 1) return 'Baru saja';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+  if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+  if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+  return formatDate(dateTime);
+}
+
 /// "HH:MM" slots between [start] and [end] (inclusive) at [stepMinutes],
 /// for picking a booking time from a list instead of typing one. Mirrors
 /// billiard-admin's generateTimeSlots so both apps behave the same way.

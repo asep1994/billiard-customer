@@ -5,6 +5,7 @@ import '../../core/api_exception.dart';
 import '../../core/location_service.dart';
 import '../../core/theme.dart';
 import '../../models/venue.dart';
+import '../../repositories/notification_repository.dart';
 import '../../repositories/venue_repository.dart';
 import '../../widgets/eight_ball_icon.dart';
 import '../../widgets/state_views.dart';
@@ -180,26 +181,72 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _NotificationBell extends StatelessWidget {
+class _NotificationBell extends StatefulWidget {
   const _NotificationBell();
 
   @override
+  State<_NotificationBell> createState() => _NotificationBellState();
+}
+
+class _NotificationBellState extends State<_NotificationBell> {
+  final _repository = NotificationRepository();
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final page = await _repository.list();
+      if (mounted) setState(() => _unreadCount = page.unreadCount);
+    } catch (_) {
+      // best-effort - a stale/missing badge isn't worth surfacing an error for
+    }
+  }
+
+  Future<void> _open() async {
+    await context.push('/notifications');
+    _loadUnreadCount();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.border),
+    return GestureDetector(
+      onTap: _open,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.border),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.notifications_outlined, size: 18, color: AppColors.textMuted),
           ),
-          alignment: Alignment.center,
-          child: const Icon(Icons.notifications_outlined, size: 18, color: AppColors.textMuted),
-        ),
-      ],
+          if (_unreadCount > 0)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                constraints: const BoxConstraints(minWidth: 16),
+                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
+                child: Text(
+                  _unreadCount > 9 ? '9+' : '$_unreadCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
