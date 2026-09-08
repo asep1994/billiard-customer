@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/formatters.dart';
@@ -11,6 +10,7 @@ import '../../repositories/booking_repository.dart';
 import '../../repositories/config_repository.dart';
 import '../../widgets/eight_ball_icon.dart';
 import '../../widgets/primary_button.dart';
+import '../payment/payment_webview_screen.dart';
 
 const _paymentMethods = [
   {'value': 'M2', 'label': 'QRIS', 'description': 'Semua aplikasi e-wallet', 'icon': Icons.qr_code},
@@ -93,8 +93,11 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
 
       final paymentUrl = await _bookingRepository.pay(bookingId: booking.id, paymentMethod: _paymentMethod);
 
-      if (paymentUrl != null) {
-        await launchUrl(Uri.parse(paymentUrl), mode: LaunchMode.externalApplication);
+      if (paymentUrl != null && mounted) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => PaymentWebViewScreen(paymentUrl: paymentUrl)),
+        );
+        await _bookingRepository.refreshPayment(booking.id).catchError((_) => booking);
       }
 
       if (mounted) context.pushReplacement('/bookings/${booking.id}');

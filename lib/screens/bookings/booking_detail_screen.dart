@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/formatters.dart';
@@ -11,6 +10,7 @@ import '../../repositories/review_repository.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_badge.dart';
+import '../payment/payment_webview_screen.dart';
 
 const _paymentMethods = [
   {'value': 'VC', 'label': 'Kartu Kredit'},
@@ -56,10 +56,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         return;
       }
 
-      final uri = Uri.parse(url);
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched && mounted) {
-        setState(() => _payError = 'Tidak bisa membuka halaman pembayaran di perangkat ini.');
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => PaymentWebViewScreen(paymentUrl: url)),
+      );
+      await _repository.refreshPayment(widget.bookingId).catchError((_) => _repository.show(widget.bookingId));
+
+      if (mounted) {
+        setState(() => _future = _repository.show(widget.bookingId));
       }
     } on ApiException catch (error) {
       setState(() => _payError = error.message);

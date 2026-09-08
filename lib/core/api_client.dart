@@ -5,23 +5,34 @@ import 'package:dio/dio.dart';
 import 'api_exception.dart';
 import 'storage.dart';
 
-/// The Laravel API base URL. `10.0.2.2` is the standard Android emulator
-/// alias for the host machine's `localhost` - a physical device on the same
-/// Wi-Fi would need the host's actual LAN IP instead.
-String _defaultBaseUrl() {
-  if (Platform.isAndroid) return 'http://10.0.2.2:8000/api/v1';
-  return 'http://localhost:8000/api/v1';
+/// `10.0.2.2` is the standard Android emulator alias for the host machine's
+/// `localhost` - it only resolves inside the emulator. A physical device on
+/// the same Wi-Fi needs the host's actual LAN IP instead, passed at build/run
+/// time: `flutter run --dart-define=DEV_HOST=192.168.1.5` (find your IP with
+/// `ipconfig` on Windows or `ifconfig`/`ip addr` on macOS/Linux). The Laravel
+/// dev server also needs to be started with `php artisan serve --host=0.0.0.0`
+/// so it accepts connections from outside the machine.
+const _devHostOverride = String.fromEnvironment('DEV_HOST');
+
+String _apiHost() {
+  if (_devHostOverride.isNotEmpty) return _devHostOverride;
+  if (Platform.isAndroid) return '10.0.2.2';
+  return 'localhost';
 }
 
+String _defaultBaseUrl() => 'http://${_apiHost()}:8000/api/v1';
+
 /// The backend serializes file URLs (venue photos, etc.) using its own
-/// `APP_URL`, which is `http://localhost:8000` in local dev - correct for a
-/// browser hitting the admin dashboard, but unreachable from the Android
-/// emulator for the same reason the API base URL needs the `10.0.2.2` alias
-/// above. Every displayed media URL should be passed through this first.
-String resolveMediaUrl(String url) {
-  if (Platform.isAndroid) return url.replaceFirst('localhost', '10.0.2.2');
-  return url;
-}
+/// `APP_URL`, which is `http://localhost:8000` in local dev - not reachable
+/// from a device other than the host itself, hence the same host swap as
+/// [_defaultBaseUrl] above. Every displayed media URL should be passed
+/// through this first.
+String resolveMediaUrl(String url) => url.replaceFirst('localhost', _apiHost());
+
+/// The scheme+host+port the backend itself is reachable at from this device -
+/// i.e. Duitku's configured `returnUrl`. Used to detect, from inside the
+/// in-app payment WebView, when Duitku has redirected back to us.
+String apiOrigin() => 'http://${_apiHost()}:8000';
 
 /// Thin Dio wrapper: attaches the customer's bearer token to every request
 /// and translates Laravel's error JSON into an [ApiException].
