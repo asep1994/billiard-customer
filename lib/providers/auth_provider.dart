@@ -43,9 +43,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login({required String phone, required String password}) async {
+  Future<void> login({required String email, required String password}) async {
     final response = await _api.post('/customer/login', data: {
-      'phone': phone,
+      'email': email,
       'password': password,
     });
 
@@ -59,13 +59,13 @@ class AuthProvider extends ChangeNotifier {
   Future<void> register({
     required String name,
     required String phone,
-    String? email,
+    required String email,
     required String password,
   }) async {
     final response = await _api.post('/customer/register', data: {
       'name': name,
       'phone': phone,
-      if (email != null && email.isNotEmpty) 'email': email,
+      'email': email,
       'password': password,
       'password_confirmation': password,
     });

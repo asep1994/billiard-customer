@@ -5,14 +5,14 @@ class AuthRepository {
 
   final ApiClient _api;
 
-  Future<String> forgotPassword(String phone) async {
-    final response = await _api.post('/customer/forgot-password', data: {'phone': phone});
+  Future<String> forgotPassword(String email) async {
+    final response = await _api.post('/customer/forgot-password', data: {'email': email});
     return response['message'] as String? ?? 'Kode reset password telah dikirim.';
   }
 
-  Future<String> resetPassword({required String phone, required String code, required String password}) async {
+  Future<String> resetPassword({required String email, required String code, required String password}) async {
     final response = await _api.post('/customer/reset-password', data: {
-      'phone': phone,
+      'email': email,
       'code': code,
       'password': password,
       'password_confirmation': password,

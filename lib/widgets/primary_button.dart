@@ -6,11 +6,16 @@ class PrimaryButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.isLoading = false,
+    this.icon,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool isLoading;
+
+  /// Trailing icon shown after the label, e.g. `Icons.arrow_forward` for the
+  /// arrow-button style used on the auth screens. Omitted elsewhere.
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +29,16 @@ class PrimaryButton extends StatelessWidget {
                 width: 18,
                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
               )
-            : Text(label),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label),
+                  if (icon != null) ...[
+                    const SizedBox(width: 8),
+                    Icon(icon, size: 18),
+                  ],
+                ],
+              ),
       ),
     );
   }

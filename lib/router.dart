@@ -33,7 +33,7 @@ final router = GoRouter(
     GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
     GoRoute(
       path: '/reset-password',
-      builder: (context, state) => ResetPasswordScreen(phone: state.extra as String),
+      builder: (context, state) => ResetPasswordScreen(email: state.extra as String),
     ),
     GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
     GoRoute(path: '/promotions', builder: (context, state) => const PromotionsScreen()),

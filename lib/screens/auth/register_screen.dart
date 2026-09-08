@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../core/api_exception.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/app_text_field.dart';
+import '../../widgets/auth_glow_background.dart';
 import '../../widgets/primary_button.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -17,20 +19,21 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
 
   bool _isSubmitting = false;
+  bool _acceptedTerms = false;
   String? _formError;
   Map<String, List<String>> _fieldErrors = {};
 
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     super.dispose();
@@ -43,6 +46,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (_passwordController.text != _passwordConfirmController.text) {
       setState(() => _formError = 'Konfirmasi password tidak cocok.');
+      return;
+    }
+
+    if (!_acceptedTerms) {
+      setState(() => _formError = 'Kamu harus menyetujui Syarat & Ketentuan dan Kebijakan Privasi.');
       return;
     }
 
@@ -76,72 +84,140 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Daftar Akun')),
+      appBar: AppBar(backgroundColor: AppColors.bg),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_formError != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.dangerSoft,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+        child: AuthGlowBackground(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Buat Akun Baru',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.text),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Daftar sekarang dan mulai pengalaman bermain billiard yang lebih mudah.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: 28),
+                  if (_formError != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.dangerSoft,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+                      ),
+                      child: Text(_formError!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
                     ),
-                    child: Text(_formError!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+                    const SizedBox(height: 16),
+                  ],
+                  AppTextField(
+                    controller: _nameController,
+                    icon: Icons.person_outline,
+                    label: 'Nama Lengkap',
+                    errorText: _serverError('name'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Nama wajib diisi' : null,
                   ),
                   const SizedBox(height: 16),
-                ],
-                TextFormField(
-                  controller: _nameController,
-                  style: const TextStyle(color: AppColors.text),
-                  decoration: InputDecoration(labelText: 'Nama', errorText: _serverError('name')),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Nama wajib diisi' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: AppColors.text),
-                  decoration: InputDecoration(
-                    labelText: 'Nomor HP',
-                    hintText: '081234567890',
-                    errorText: _serverError('phone'),
+                  AppTextField(
+                    controller: _emailController,
+                    icon: Icons.mail_outline,
+                    label: 'Email',
+                    keyboardType: TextInputType.emailAddress,
+                    errorText: _serverError('email'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Email wajib diisi' : null,
                   ),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Nomor HP wajib diisi' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: AppColors.text),
-                  decoration: InputDecoration(labelText: 'Email (opsional)', errorText: _serverError('email')),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  style: const TextStyle(color: AppColors.text),
-                  decoration: InputDecoration(labelText: 'Password', errorText: _serverError('password')),
-                  validator: (value) =>
-                      (value == null || value.length < 8) ? 'Password minimal 8 karakter' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordConfirmController,
-                  obscureText: true,
-                  style: const TextStyle(color: AppColors.text),
-                  decoration: const InputDecoration(labelText: 'Konfirmasi Password'),
-                  validator: (value) => (value == null || value.isEmpty) ? 'Wajib diisi' : null,
-                ),
-                const SizedBox(height: 24),
-                PrimaryButton(label: 'Daftar', isLoading: _isSubmitting, onPressed: _submit),
-              ],
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: _phoneController,
+                    icon: Icons.phone_outlined,
+                    label: 'Nomor HP',
+                    hintText: '081234567890',
+                    keyboardType: TextInputType.phone,
+                    errorText: _serverError('phone'),
+                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Nomor HP wajib diisi' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: _passwordController,
+                    icon: Icons.lock_outline,
+                    label: 'Password',
+                    obscureText: true,
+                    errorText: _serverError('password'),
+                    validator: (value) =>
+                        (value == null || value.length < 8) ? 'Password minimal 8 karakter' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: _passwordConfirmController,
+                    icon: Icons.lock_outline,
+                    label: 'Konfirmasi Password',
+                    obscureText: true,
+                    validator: (value) => (value == null || value.isEmpty) ? 'Wajib diisi' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: _acceptedTerms,
+                          onChanged: (value) => setState(() => _acceptedTerms = value ?? false),
+                        ),
+                        const Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 12),
+                            child: Text.rich(
+                              TextSpan(
+                                style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                                children: [
+                                  TextSpan(text: 'Saya menyetujui '),
+                                  TextSpan(
+                                    text: 'Syarat & Ketentuan',
+                                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                  ),
+                                  TextSpan(text: ' dan '),
+                                  TextSpan(
+                                    text: 'Kebijakan Privasi',
+                                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  PrimaryButton(
+                    label: 'Daftar Akun',
+                    icon: Icons.arrow_forward,
+                    isLoading: _isSubmitting,
+                    onPressed: _submit,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Sudah punya akun?', style: TextStyle(color: AppColors.textMuted)),
+                      TextButton(
+                        onPressed: () => context.canPop() ? context.pop() : context.go('/login'),
+                        child: const Text('Masuk Sekarang'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
