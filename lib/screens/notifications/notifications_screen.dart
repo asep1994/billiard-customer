@@ -120,6 +120,8 @@ class _NotificationTile extends StatelessWidget {
         return Icons.payments_outlined;
       case 'booking_reminder':
         return Icons.access_time;
+      case 'payment_reminder':
+        return Icons.warning_amber_outlined;
       default:
         return Icons.notifications_none;
     }
