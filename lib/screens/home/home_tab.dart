@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api_exception.dart';
 import '../../core/location_service.dart';
 import '../../core/theme.dart';
+import '../../models/app_banner.dart';
 import '../../models/venue.dart';
+import '../../repositories/banner_repository.dart';
 import '../../repositories/notification_repository.dart';
 import '../../repositories/venue_repository.dart';
 import '../../widgets/eight_ball_icon.dart';
@@ -72,7 +76,7 @@ class _HomeTabState extends State<HomeTab> {
           children: [
             _Header(onSearchTap: () => widget.onQuickFilter(ExploreQuickFilter.none)),
             const SizedBox(height: 16),
-            const _HeroBanner(),
+            const _BannerCarousel(),
             const SizedBox(height: 20),
             _QuickActions(onQuickFilter: widget.onQuickFilter),
             const SizedBox(height: 24),
@@ -247,6 +251,120 @@ class _NotificationBellState extends State<_NotificationBell> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Auto-scrolling carousel of admin-uploaded banners, fetched from
+/// `/customer/banners`. Falls back to the static [_HeroBanner] while
+/// loading, on error, or when no banners have been uploaded yet, so the
+/// homepage never looks empty or broken.
+class _BannerCarousel extends StatefulWidget {
+  const _BannerCarousel();
+
+  @override
+  State<_BannerCarousel> createState() => _BannerCarouselState();
+}
+
+class _BannerCarouselState extends State<_BannerCarousel> {
+  final _repository = BannerRepository();
+  final _pageController = PageController();
+
+  Timer? _timer;
+  int _index = 0;
+  List<AppBanner> _banners = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final banners = await _repository.list();
+      if (!mounted) return;
+      setState(() {
+        _banners = banners;
+        _isLoading = false;
+      });
+      _startAutoScroll();
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _startAutoScroll() {
+    if (_banners.length <= 1) return;
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!_pageController.hasClients) return;
+      _index = (_index + 1) % _banners.length;
+      _pageController.animateToPage(
+        _index,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading || _banners.isEmpty) {
+      return const _HeroBanner();
+    }
+
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: SizedBox(
+            height: 140,
+            width: double.infinity,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _banners.length,
+              onPageChanged: (value) => setState(() => _index = value),
+              itemBuilder: (context, i) {
+                final banner = _banners[i];
+                return banner.imageUrl != null
+                    ? Image.network(
+                        banner.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const _HeroBanner(),
+                      )
+                    : const _HeroBanner();
+              },
+            ),
+          ),
+        ),
+        if (_banners.length > 1) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_banners.length, (i) {
+              final active = i == _index;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                height: 6,
+                width: active ? 16 : 6,
+                decoration: BoxDecoration(
+                  color: active ? AppColors.primary : AppColors.border,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
     );
   }
 }
