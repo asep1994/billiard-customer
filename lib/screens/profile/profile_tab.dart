@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/initials_avatar.dart';
+import '../../widgets/section_label.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -29,14 +31,6 @@ class ProfileTab extends StatelessWidget {
       await context.read<AuthProvider>().logout();
       if (context.mounted) context.go('/login');
     }
-  }
-
-  String _initials(String? name) {
-    if (name == null || name.trim().isEmpty) return '?';
-    final parts = name.trim().split(RegExp(r'\s+'));
-    final first = parts.first.substring(0, 1);
-    final last = parts.length > 1 ? parts.last.substring(0, 1) : '';
-    return (first + last).toUpperCase();
   }
 
   @override
@@ -68,20 +62,7 @@ class ProfileTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Container(
-                  width: 84,
-                  height: 84,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.15),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.4), width: 2),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _initials(customer?.name),
-                    style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
+                InitialsAvatar(name: customer?.name, size: 84),
                 const SizedBox(height: 14),
                 Text(
                   customer?.name ?? '-',
@@ -108,7 +89,7 @@ class ProfileTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _SectionLabel('Akun'),
+              const SectionLabel('Akun'),
               const SizedBox(height: 10),
               _MenuCard(
                 children: [
@@ -121,7 +102,7 @@ class ProfileTab extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-              const _SectionLabel('Lainnya'),
+              const SectionLabel('Lainnya'),
               const SizedBox(height: 10),
               _MenuCard(
                 children: [
@@ -158,25 +139,6 @@ class ProfileTab extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: const TextStyle(
-        color: AppColors.textFaint,
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.6,
-      ),
     );
   }
 }

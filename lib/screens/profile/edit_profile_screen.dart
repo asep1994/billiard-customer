@@ -5,7 +5,9 @@ import '../../core/api_exception.dart';
 import '../../core/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_text_field.dart';
+import '../../widgets/initials_avatar.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/section_label.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -92,96 +94,142 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final customer = context.watch<AuthProvider>().customer;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(title: const Text('Edit Profil')),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_formError != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.dangerSoft,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
-                    ),
-                    child: Text(_formError!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(8, 4, 20, 28),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.primaryDark, AppColors.bg],
                   ),
-                  const SizedBox(height: 16),
-                ],
-                AppTextField(
-                  controller: _nameController,
-                  icon: Icons.person_outline,
-                  label: 'Nama Lengkap',
-                  errorText: _serverError('name'),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                  borderRadius: BorderRadius.only(bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
                 ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  controller: _emailController,
-                  icon: Icons.mail_outline,
-                  label: 'Email',
-                  keyboardType: TextInputType.emailAddress,
-                  errorText: _serverError('email'),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Email wajib diisi' : null,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        ),
+                        const Text(
+                          'Edit Profil',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    InitialsAvatar(name: customer?.name, size: 72),
+                    const SizedBox(height: 12),
+                    Text(
+                      customer?.name ?? '-',
+                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Perbarui informasi akunmu',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  controller: _phoneController,
-                  icon: Icons.phone_outlined,
-                  label: 'Nomor HP',
-                  keyboardType: TextInputType.phone,
-                  errorText: _serverError('phone'),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Nomor HP wajib diisi' : null,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_formError != null) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.dangerSoft,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+                          ),
+                          child: Text(_formError!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      const SectionLabel('Data Diri'),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        controller: _nameController,
+                        icon: Icons.person_outline,
+                        label: 'Nama Lengkap',
+                        errorText: _serverError('name'),
+                        validator: (value) => (value == null || value.trim().isEmpty) ? 'Nama wajib diisi' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        controller: _emailController,
+                        icon: Icons.mail_outline,
+                        label: 'Email',
+                        keyboardType: TextInputType.emailAddress,
+                        errorText: _serverError('email'),
+                        validator: (value) => (value == null || value.trim().isEmpty) ? 'Email wajib diisi' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        controller: _phoneController,
+                        icon: Icons.phone_outlined,
+                        label: 'Nomor HP',
+                        keyboardType: TextInputType.phone,
+                        errorText: _serverError('phone'),
+                        validator: (value) => (value == null || value.trim().isEmpty) ? 'Nomor HP wajib diisi' : null,
+                      ),
+                      const SizedBox(height: 28),
+                      const SectionLabel('Ganti Password (Opsional)'),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Kosongkan kalau tidak ingin mengganti password.',
+                        style: TextStyle(color: AppColors.textFaint, fontSize: 12),
+                      ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        controller: _currentPasswordController,
+                        icon: Icons.lock_outline,
+                        label: 'Password Saat Ini',
+                        obscureText: true,
+                        errorText: _serverError('current_password'),
+                      ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        controller: _passwordController,
+                        icon: Icons.lock_outline,
+                        label: 'Password Baru',
+                        obscureText: true,
+                        errorText: _serverError('password'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return null;
+                          if (value.length < 8) return 'Password minimal 8 karakter';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      AppTextField(
+                        controller: _confirmController,
+                        icon: Icons.lock_outline,
+                        label: 'Konfirmasi Password Baru',
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 28),
+                      PrimaryButton(label: 'Simpan Perubahan', isLoading: _isSubmitting, onPressed: _submit),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 28),
-                const Text(
-                  'Ganti Password (opsional)',
-                  style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Kosongkan kalau tidak ingin mengganti password.',
-                  style: TextStyle(color: AppColors.textFaint, fontSize: 12),
-                ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  controller: _currentPasswordController,
-                  icon: Icons.lock_outline,
-                  label: 'Password Saat Ini',
-                  obscureText: true,
-                  errorText: _serverError('current_password'),
-                ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  controller: _passwordController,
-                  icon: Icons.lock_outline,
-                  label: 'Password Baru',
-                  obscureText: true,
-                  errorText: _serverError('password'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return null;
-                    if (value.length < 8) return 'Password minimal 8 karakter';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                AppTextField(
-                  controller: _confirmController,
-                  icon: Icons.lock_outline,
-                  label: 'Konfirmasi Password Baru',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 24),
-                PrimaryButton(label: 'Simpan Perubahan', isLoading: _isSubmitting, onPressed: _submit),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
