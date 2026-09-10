@@ -41,13 +41,16 @@ class _HomeTabState extends State<HomeTab> {
 
   Future<List<Venue>> _loadRecommendations() async {
     final position = await _locationService.getCurrentPosition();
-    final venues = await _repository.browse(lat: position?.latitude, lng: position?.longitude);
+    final venues = await _repository.browse(
+      lat: position?.latitude,
+      lng: position?.longitude,
+    );
     return venues.take(6).toList();
   }
 
   void _reload() => setState(() {
-        _future = _loadRecommendations();
-      });
+    _future = _loadRecommendations();
+  });
 
   Future<void> _toggleFavorite(Venue venue) async {
     setState(() => venue.isFavorited = !venue.isFavorited);
@@ -65,72 +68,90 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: RefreshIndicator(
-        onRefresh: () async {
-          _reload();
-          await _future;
-        },
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          children: [
-            _Header(onSearchTap: () => widget.onQuickFilter(ExploreQuickFilter.none)),
-            const SizedBox(height: 16),
-            const _BannerCarousel(),
-            const SizedBox(height: 20),
-            _QuickActions(onQuickFilter: widget.onQuickFilter),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return RefreshIndicator(
+      onRefresh: () async {
+        _reload();
+        await _future;
+      },
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          _Header(
+            onSearchTap: () => widget.onQuickFilter(ExploreQuickFilter.none),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Rekomendasi untuk kamu',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.text),
+                const _BannerCarousel(),
+                const SizedBox(height: 20),
+                _QuickActions(onQuickFilter: widget.onQuickFilter),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Rekomendasi untuk kamu',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          widget.onQuickFilter(ExploreQuickFilter.none),
+                      child: const Text(
+                        'Lihat Semua',
+                        style: TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () => widget.onQuickFilter(ExploreQuickFilter.none),
-                  child: const Text('Lihat Semua', style: TextStyle(fontSize: 13)),
+                const SizedBox(height: 8),
+                FutureBuilder<List<Venue>>(
+                  future: _future,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: LoadingView(),
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      final message = snapshot.error is ApiException
+                          ? (snapshot.error as ApiException).message
+                          : 'Gagal memuat venue.';
+                      return ErrorView(message: message, onRetry: _reload);
+                    }
+
+                    final venues = snapshot.data ?? [];
+                    if (venues.isEmpty) {
+                      return const EmptyView(
+                        message: 'Belum ada venue di sekitarmu.',
+                        icon: Icons.search_off,
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        for (final venue in venues) ...[
+                          VenueCard(
+                            venue: venue,
+                            onTap: () => context.push('/venues/${venue.id}'),
+                            onFavoriteToggle: () => _toggleFavorite(venue),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            FutureBuilder<List<Venue>>(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: LoadingView(),
-                  );
-                }
-                if (snapshot.hasError) {
-                  final message = snapshot.error is ApiException
-                      ? (snapshot.error as ApiException).message
-                      : 'Gagal memuat venue.';
-                  return ErrorView(message: message, onRetry: _reload);
-                }
-
-                final venues = snapshot.data ?? [];
-                if (venues.isEmpty) {
-                  return const EmptyView(message: 'Belum ada venue di sekitarmu.', icon: Icons.search_off);
-                }
-
-                return Column(
-                  children: [
-                    for (final venue in venues) ...[
-                      VenueCard(
-                        venue: venue,
-                        onTap: () => context.push('/venues/${venue.id}'),
-                        onFavoriteToggle: () => _toggleFavorite(venue),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -143,44 +164,78 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primaryDark, AppColors.bg],
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.location_on, size: 18, color: AppColors.primary),
-            const SizedBox(width: 6),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            Row(
+              children: [
+                const Icon(Icons.location_on, size: 18, color: Colors.white),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Bandung, Jawa Barat', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 13)),
-                      Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.textFaint),
+                      const Row(
+                        children: [
+                          Text(
+                            'Bandung, Jawa Barat',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                          Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 16,
+                            color: Colors.white70,
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Lokasi Anda',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 11,
+                        ),
+                      ),
                     ],
                   ),
-                  Text('Lokasi Anda', style: TextStyle(color: AppColors.textFaint, fontSize: 11)),
-                ],
+                ),
+                const _NotificationBell(),
+              ],
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onTap: onSearchTap,
+              child: AbsorbPointer(
+                child: TextField(
+                  style: const TextStyle(color: AppColors.text),
+                  decoration: const InputDecoration(
+                    hintText: 'Cari tempat billiard...',
+                    prefixIcon: Icon(Icons.search, color: AppColors.textFaint),
+                  ),
+                ),
               ),
             ),
-            const _NotificationBell(),
           ],
         ),
-        const SizedBox(height: 16),
-        GestureDetector(
-          onTap: onSearchTap,
-          child: AbsorbPointer(
-            child: TextField(
-              style: const TextStyle(color: AppColors.text),
-              decoration: const InputDecoration(
-                hintText: 'Cari tempat billiard...',
-                prefixIcon: Icon(Icons.search, color: AppColors.textFaint),
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -227,12 +282,16 @@ class _NotificationBellState extends State<_NotificationBell> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
             ),
             alignment: Alignment.center,
-            child: const Icon(Icons.notifications_outlined, size: 18, color: AppColors.textMuted),
+            child: const Icon(
+              Icons.notifications_outlined,
+              size: 18,
+              color: Colors.white,
+            ),
           ),
           if (_unreadCount > 0)
             Positioned(
@@ -241,11 +300,18 @@ class _NotificationBellState extends State<_NotificationBell> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 constraints: const BoxConstraints(minWidth: 16),
-                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Text(
                   _unreadCount > 9 ? '9+' : '$_unreadCount',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
@@ -338,7 +404,8 @@ class _BannerCarouselState extends State<_BannerCarousel> {
                     ? Image.network(
                         banner.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const _HeroBanner(),
+                        errorBuilder: (context, error, stackTrace) =>
+                            const _HeroBanner(),
                       )
                     : const _HeroBanner();
               },
@@ -393,10 +460,18 @@ class _HeroBanner extends StatelessWidget {
               children: [
                 Text(
                   'Main Billiard Lebih\nMudah Bersama Unity',
-                  style: TextStyle(color: AppColors.text, fontSize: 18, fontWeight: FontWeight.bold, height: 1.25),
+                  style: TextStyle(
+                    color: AppColors.text,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    height: 1.25,
+                  ),
                 ),
                 SizedBox(height: 8),
-                Text('Temukan, Pesan, Main!', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                Text(
+                  'Temukan, Pesan, Main!',
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -445,7 +520,12 @@ class _QuickActions extends StatelessWidget {
 }
 
 class _QuickActionButton extends StatelessWidget {
-  const _QuickActionButton({required this.icon, required this.label, required this.onTap, this.highlighted = false});
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.highlighted = false,
+  });
 
   final IconData icon;
   final String label;
@@ -467,16 +547,27 @@ class _QuickActionButton extends StatelessWidget {
               decoration: BoxDecoration(
                 color: highlighted ? AppColors.primary : AppColors.surface,
                 shape: BoxShape.circle,
-                border: highlighted ? null : Border.all(color: AppColors.border),
+                border: highlighted
+                    ? null
+                    : Border.all(color: AppColors.border),
               ),
               alignment: Alignment.center,
-              child: Icon(icon, color: highlighted ? Colors.black : AppColors.textMuted, size: 22),
+              child: Icon(
+                icon,
+                color: highlighted ? Colors.black : AppColors.textMuted,
+                size: 22,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
               label,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.w500, height: 1.2),
+              style: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                height: 1.2,
+              ),
             ),
           ],
         ),
