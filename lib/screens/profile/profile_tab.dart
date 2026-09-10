@@ -74,6 +74,14 @@ class ProfileTab extends StatelessWidget {
           const SizedBox(height: 24),
           ListTile(
             contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.edit_outlined, color: AppColors.textMuted),
+            title: const Text('Edit Profil', style: TextStyle(color: AppColors.text)),
+            trailing: const Icon(Icons.chevron_right, color: AppColors.textFaint),
+            onTap: () => context.push('/profile/edit'),
+          ),
+          const Divider(height: 1, color: AppColors.border),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.logout, color: AppColors.danger),
             title: const Text('Keluar', style: TextStyle(color: AppColors.danger)),
             onTap: () => _confirmLogout(context),

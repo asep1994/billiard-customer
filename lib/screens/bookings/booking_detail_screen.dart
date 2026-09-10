@@ -36,6 +36,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   String _paymentMethod = 'VC';
   bool _isPaying = false;
   String? _payError;
+  bool _isCancelling = false;
+  String? _cancelError;
 
   @override
   void initState() {
@@ -71,6 +73,47 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       setState(() => _payError = 'Gagal memproses pembayaran. Coba lagi.');
     } finally {
       if (mounted) setState(() => _isPaying = false);
+    }
+  }
+
+  Future<void> _confirmCancel() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Batalkan Booking', style: TextStyle(color: AppColors.text)),
+        content: const Text(
+          'Yakin mau membatalkan booking ini? Tindakan ini tidak bisa dibatalkan.',
+          style: TextStyle(color: AppColors.textMuted),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Tidak')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ya, Batalkan', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isCancelling = true;
+      _cancelError = null;
+    });
+
+    try {
+      await _repository.cancel(widget.bookingId);
+      if (mounted) {
+        setState(() => _future = _repository.show(widget.bookingId));
+      }
+    } on ApiException catch (error) {
+      setState(() => _cancelError = error.message);
+    } catch (_) {
+      setState(() => _cancelError = 'Gagal membatalkan booking. Coba lagi.');
+    } finally {
+      if (mounted) setState(() => _isCancelling = false);
     }
   }
 
@@ -145,6 +188,28 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   ],
                 ),
               ),
+              if (booking.canCancel) ...[
+                const SizedBox(height: 16),
+                if (_cancelError != null) ...[
+                  Text(_cancelError!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+                  const SizedBox(height: 8),
+                ],
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isCancelling ? null : _confirmCancel,
+                    icon: _isCancelling
+                        ? const SizedBox(
+                            height: 14,
+                            width: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.danger),
+                          )
+                        : const Icon(Icons.cancel_outlined, size: 16, color: AppColors.danger),
+                    label: const Text('Batalkan Booking', style: TextStyle(color: AppColors.danger)),
+                    style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.danger)),
+                  ),
+                ),
+              ],
               if (booking.needsPayment) ...[
                 const SizedBox(height: 24),
                 const Text('Metode Pembayaran', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),

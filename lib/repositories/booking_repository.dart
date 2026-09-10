@@ -56,4 +56,11 @@ class BookingRepository {
     final response = await _api.post('/customer/bookings/$bookingId/refresh-payment');
     return Booking.fromJson(response['data'] as Map<String, dynamic>);
   }
+
+  /// Cancels one of the customer's own bookings - only valid while it's
+  /// still pending/confirmed and hasn't started yet (see [Booking.canCancel]).
+  Future<Booking> cancel(int bookingId) async {
+    final response = await _api.post('/customer/bookings/$bookingId/cancel');
+    return Booking.fromJson(response['data'] as Map<String, dynamic>);
+  }
 }

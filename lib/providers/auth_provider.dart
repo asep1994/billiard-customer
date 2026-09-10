@@ -77,6 +77,28 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateProfile({
+    required String name,
+    required String email,
+    required String phone,
+    String? currentPassword,
+    String? password,
+  }) async {
+    final changingPassword = password != null && password.isNotEmpty;
+
+    final response = await _api.put('/customer/me', data: {
+      'name': name,
+      'email': email,
+      'phone': phone,
+      if (changingPassword) 'current_password': currentPassword,
+      if (changingPassword) 'password': password,
+      if (changingPassword) 'password_confirmation': password,
+    });
+
+    customer = CustomerAccount.fromJson(response['data'] as Map<String, dynamic>);
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     await PushNotificationService.instance.unregisterToken();
 

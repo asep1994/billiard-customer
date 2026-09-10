@@ -81,4 +81,9 @@ class Booking {
   String get paymentStatusLabel => _paymentLabels[paymentStatus] ?? paymentStatus;
   bool get needsPayment => paymentStatus != 'paid' && status != 'cancelled';
   bool get canReview => status == 'completed' && review == null;
+
+  /// Mirrors the backend's own rule in CustomerBookingController::cancel() -
+  /// only bookings that haven't started yet and aren't already
+  /// cancelled/completed/ongoing can be self-cancelled from the app.
+  bool get canCancel => (status == 'pending' || status == 'confirmed') && startTime.isAfter(nowInJakarta());
 }

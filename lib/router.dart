@@ -13,6 +13,7 @@ import 'screens/bookings/booking_detail_screen.dart';
 import 'screens/home/home_shell.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/profile/edit_profile_screen.dart';
 import 'screens/promotions/promotions_screen.dart';
 import 'screens/splash/splash_screen.dart';
 import 'screens/venue/venue_detail_screen.dart';
@@ -38,6 +39,7 @@ final router = GoRouter(
     GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
     GoRoute(path: '/promotions', builder: (context, state) => const PromotionsScreen()),
     GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
+    GoRoute(path: '/profile/edit', builder: (context, state) => const EditProfileScreen()),
     GoRoute(
       path: '/venues/:id',
       builder: (context, state) => VenueDetailScreen(venueId: int.parse(state.pathParameters['id']!)),
