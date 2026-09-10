@@ -31,8 +31,8 @@ class FavoritesTabState extends State<FavoritesTab> {
   void reload() => _reload();
 
   void _reload() => setState(() {
-        _future = _repository.favorites();
-      });
+    _future = _repository.favorites();
+  });
 
   Future<void> _removeFavorite(Venue venue) async {
     try {
@@ -45,64 +45,89 @@ class FavoritesTabState extends State<FavoritesTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 20, 20, 12),
-            child: Text(
-              'Favorit',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.text),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.primaryDark, AppColors.bg],
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(28),
+              bottomRight: Radius.circular(28),
             ),
           ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                _reload();
-                await _future;
-              },
-              child: FutureBuilder<List<Venue>>(
-                future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingView();
-                  }
-                  if (snapshot.hasError) {
-                    final message = snapshot.error is ApiException
-                        ? (snapshot.error as ApiException).message
-                        : 'Gagal memuat favorit.';
-                    return ListView(children: [ErrorView(message: message, onRetry: _reload)]);
-                  }
-
-                  final venues = snapshot.data ?? [];
-                  if (venues.isEmpty) {
-                    return ListView(
-                      children: const [
-                        EmptyView(message: 'Belum ada venue favorit.', icon: Icons.favorite_border),
-                      ],
-                    );
-                  }
-
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                    itemCount: venues.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final venue = venues[index];
-                      return VenueCard(
-                        venue: venue,
-                        onTap: () => context.push('/venues/${venue.id}'),
-                        onFavoriteToggle: () => _removeFavorite(venue),
-                      );
-                    },
-                  );
-                },
+          child: const SafeArea(
+            bottom: false,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Favorit',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              _reload();
+              await _future;
+            },
+            child: FutureBuilder<List<Venue>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const LoadingView();
+                }
+                if (snapshot.hasError) {
+                  final message = snapshot.error is ApiException
+                      ? (snapshot.error as ApiException).message
+                      : 'Gagal memuat favorit.';
+                  return ListView(
+                    children: [ErrorView(message: message, onRetry: _reload)],
+                  );
+                }
+
+                final venues = snapshot.data ?? [];
+                if (venues.isEmpty) {
+                  return ListView(
+                    children: const [
+                      EmptyView(
+                        message: 'Belum ada venue favorit.',
+                        icon: Icons.favorite_border,
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                  itemCount: venues.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final venue = venues[index];
+                    return VenueCard(
+                      venue: venue,
+                      onTap: () => context.push('/venues/${venue.id}'),
+                      onFavoriteToggle: () => _removeFavorite(venue),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

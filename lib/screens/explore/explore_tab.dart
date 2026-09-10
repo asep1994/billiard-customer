@@ -68,8 +68,8 @@ class ExploreTabState extends State<ExploreTab> {
   }
 
   void _reload() => setState(() {
-        _future = _load();
-      });
+    _future = _load();
+  });
 
   String? get _filterLabel {
     switch (_filter) {
@@ -100,20 +100,36 @@ class ExploreTabState extends State<ExploreTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.primaryDark, AppColors.bg],
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(28),
+              bottomRight: Radius.circular(28),
+            ),
+          ),
+          child: SafeArea(
+            bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
                   'Jelajah',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.text),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 TextField(
                   controller: _searchController,
                   style: const TextStyle(color: AppColors.text),
@@ -121,8 +137,14 @@ class ExploreTabState extends State<ExploreTab> {
                   onSubmitted: (_) => _reload(),
                   decoration: InputDecoration(
                     hintText: 'Cari nama venue atau kota...',
-                    prefixIcon: const Icon(Icons.search, color: AppColors.textFaint),
-                    suffixIcon: IconButton(icon: const Icon(Icons.arrow_forward), onPressed: _reload),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppColors.textFaint,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.arrow_forward),
+                      onPressed: _reload,
+                    ),
                   ),
                 ),
                 if (_filterLabel != null) ...[
@@ -131,62 +153,78 @@ class ExploreTabState extends State<ExploreTab> {
                     alignment: Alignment.centerLeft,
                     child: Chip(
                       label: Text(_filterLabel!),
-                      labelStyle: const TextStyle(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.w600),
-                      backgroundColor: AppColors.primarySoft,
+                      labelStyle: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      backgroundColor: Colors.white,
                       side: BorderSide.none,
                       onDeleted: () => applyFilter(ExploreQuickFilter.none),
-                      deleteIcon: const Icon(Icons.close, size: 16, color: AppColors.primary),
+                      deleteIcon: const Icon(
+                        Icons.close,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ],
               ],
             ),
           ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                _reload();
-                await _future;
-              },
-              child: FutureBuilder<List<Venue>>(
-                future: _future,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingView();
-                  }
-                  if (snapshot.hasError) {
-                    final message = snapshot.error is ApiException
-                        ? (snapshot.error as ApiException).message
-                        : 'Gagal memuat venue.';
-                    return ListView(children: [ErrorView(message: message, onRetry: _reload)]);
-                  }
-
-                  final venues = snapshot.data ?? [];
-                  if (venues.isEmpty) {
-                    return ListView(
-                      children: const [EmptyView(message: 'Tidak ada venue ditemukan.', icon: Icons.search_off)],
-                    );
-                  }
-
-                  return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                    itemCount: venues.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final venue = venues[index];
-                      return VenueCard(
-                        venue: venue,
-                        onTap: () => context.push('/venues/${venue.id}'),
-                        onFavoriteToggle: () => _toggleFavorite(venue),
-                      );
-                    },
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              _reload();
+              await _future;
+            },
+            child: FutureBuilder<List<Venue>>(
+              future: _future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const LoadingView();
+                }
+                if (snapshot.hasError) {
+                  final message = snapshot.error is ApiException
+                      ? (snapshot.error as ApiException).message
+                      : 'Gagal memuat venue.';
+                  return ListView(
+                    children: [ErrorView(message: message, onRetry: _reload)],
                   );
-                },
-              ),
+                }
+
+                final venues = snapshot.data ?? [];
+                if (venues.isEmpty) {
+                  return ListView(
+                    children: const [
+                      EmptyView(
+                        message: 'Tidak ada venue ditemukan.',
+                        icon: Icons.search_off,
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                  itemCount: venues.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final venue = venues[index];
+                    return VenueCard(
+                      venue: venue,
+                      onTap: () => context.push('/venues/${venue.id}'),
+                      onFavoriteToggle: () => _toggleFavorite(venue),
+                    );
+                  },
+                );
+              },
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
