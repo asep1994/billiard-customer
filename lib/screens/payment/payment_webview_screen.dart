@@ -3,6 +3,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
+import '../../widgets/gradient_header.dart';
 
 /// Shows Duitku's hosted payment page in-app instead of switching to an
 /// external browser. Pops itself once Duitku redirects back to our own
@@ -54,16 +55,30 @@ class _PaymentWebViewScreenState extends State<PaymentWebViewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        title: const Text('Pembayaran'),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Selesai')),
-        ],
-      ),
-      body: Stack(
+      body: Column(
         children: [
-          WebViewWidget(controller: _controller),
-          if (_isLoading) const LinearProgressIndicator(color: AppColors.primary, minHeight: 2),
+          GradientHeader(
+            title: 'Pembayaran',
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                child: const Text('Selesai'),
+              ),
+            ],
+          ),
+          Expanded(
+            child: Stack(
+              children: [
+                WebViewWidget(controller: _controller),
+                if (_isLoading)
+                  const LinearProgressIndicator(
+                    color: AppColors.primary,
+                    minHeight: 2,
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );

@@ -26,19 +26,22 @@ const _slides = [
     icon: Icons.travel_explore_outlined,
     title: 'Temukan Tempat Billiard',
     highlight: 'Terbaik',
-    description: 'Cari venue billiard di kotamu, lihat meja yang tersedia, dan jam operasionalnya.',
+    description:
+        'Cari venue billiard di kotamu, lihat meja yang tersedia, dan jam operasionalnya.',
   ),
   _Slide(
     icon: Icons.event_available_outlined,
     title: 'Booking Meja',
     highlight: 'Tanpa Ribet',
-    description: 'Pilih tanggal dan jam, cek meja yang masih kosong, langsung booking dari HP.',
+    description:
+        'Pilih tanggal dan jam, cek meja yang masih kosong, langsung booking dari HP.',
   ),
   _Slide(
     icon: Icons.emoji_events_outlined,
     title: 'More Than A Game',
     highlight: "It's A Community",
-    description: 'Temukan tempat billiard terbaik di kotamu, pesan meja dengan mudah, dan main kapan saja.',
+    description:
+        'Temukan tempat billiard terbaik di kotamu, pesan meja dengan mudah, dan main kapan saja.',
   ),
 ];
 
@@ -84,7 +87,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   padding: const EdgeInsets.all(16),
                   child: TextButton(
                     onPressed: _skip,
-                    child: const Text('Lewati', style: TextStyle(color: AppColors.textMuted)),
+                    child: const Text(
+                      'Lewati',
+                      style: TextStyle(color: AppColors.textMuted),
+                    ),
                   ),
                 ),
               ),
@@ -103,20 +109,39 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Container(
                             height: 140,
                             width: 140,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.primarySoft,
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.25,
+                                ),
+                                width: 1.5,
+                              ),
                             ),
-                            child: Icon(slide.icon, size: 64, color: AppColors.primary),
+                            child: Icon(
+                              slide.icon,
+                              size: 64,
+                              color: AppColors.primary,
+                            ),
                           ),
                           const SizedBox(height: 40),
                           RichText(
                             textAlign: TextAlign.center,
                             text: TextSpan(
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.text),
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.text,
+                              ),
                               children: [
                                 TextSpan(text: '${slide.title}\n'),
-                                TextSpan(text: slide.highlight, style: const TextStyle(color: AppColors.primary)),
+                                TextSpan(
+                                  text: slide.highlight,
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -124,7 +149,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             slide.description,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 14, height: 1.5),
+                            style: const TextStyle(
+                              color: AppColors.textMuted,
+                              fontSize: 14,
+                              height: 1.5,
+                            ),
                           ),
                         ],
                       ),
@@ -146,16 +175,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           height: 8,
                           width: active ? 20 : 8,
                           decoration: BoxDecoration(
-                            color: active ? AppColors.primary : AppColors.border,
+                            color: active
+                                ? AppColors.primary
+                                : AppColors.border,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         );
                       }),
                     ),
                     const SizedBox(height: 24),
-                    PrimaryButton(label: 'Masuk', icon: Icons.arrow_forward, onPressed: _goToLogin),
+                    PrimaryButton(
+                      label: 'Masuk',
+                      icon: Icons.arrow_forward,
+                      onPressed: _goToLogin,
+                    ),
                     const SizedBox(height: 12),
-                    SecondaryButton(label: 'Daftar Akun', onPressed: _goToRegister),
+                    SecondaryButton(
+                      label: 'Daftar Akun',
+                      onPressed: _goToRegister,
+                    ),
                   ],
                 ),
               ),
