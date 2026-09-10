@@ -6,6 +6,7 @@ import '../../core/formatters.dart';
 import '../../core/theme.dart';
 import '../../models/app_notification.dart';
 import '../../repositories/notification_repository.dart';
+import '../../widgets/gradient_header.dart';
 import '../../widgets/state_views.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -26,8 +27,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _reload() => setState(() {
-        _future = _repository.list();
-      });
+    _future = _repository.list();
+  });
 
   Future<void> _markAllAsRead() async {
     try {
@@ -52,53 +53,69 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: AppBar(
-        title: const Text('Notifikasi'),
-        actions: [
-          TextButton(onPressed: _markAllAsRead, child: const Text('Tandai semua')),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          _reload();
-          await _future;
-        },
-        child: FutureBuilder<NotificationsPage>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const LoadingView();
-            }
-            if (snapshot.hasError) {
-              final message = snapshot.error is ApiException
-                  ? (snapshot.error as ApiException).message
-                  : 'Gagal memuat notifikasi.';
-              return ListView(children: [ErrorView(message: message, onRetry: _reload)]);
-            }
-
-            final notifications = snapshot.data?.items ?? [];
-            if (notifications.isEmpty) {
-              return ListView(
-                children: const [
-                  EmptyView(message: 'Belum ada notifikasi.', icon: Icons.notifications_none),
-                ],
-              );
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.all(20),
-              itemCount: notifications.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final notification = notifications[index];
-                return _NotificationTile(
-                  notification: notification,
-                  onTap: () => _openNotification(notification),
-                );
+      body: Column(
+        children: [
+          GradientHeader(
+            title: 'Notifikasi',
+            actions: [
+              TextButton(
+                onPressed: _markAllAsRead,
+                style: TextButton.styleFrom(foregroundColor: Colors.white),
+                child: const Text('Tandai semua'),
+              ),
+            ],
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _reload();
+                await _future;
               },
-            );
-          },
-        ),
+              child: FutureBuilder<NotificationsPage>(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const LoadingView();
+                  }
+                  if (snapshot.hasError) {
+                    final message = snapshot.error is ApiException
+                        ? (snapshot.error as ApiException).message
+                        : 'Gagal memuat notifikasi.';
+                    return ListView(
+                      children: [ErrorView(message: message, onRetry: _reload)],
+                    );
+                  }
+
+                  final notifications = snapshot.data?.items ?? [];
+                  if (notifications.isEmpty) {
+                    return ListView(
+                      children: const [
+                        EmptyView(
+                          message: 'Belum ada notifikasi.',
+                          icon: Icons.notifications_none,
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(20),
+                    itemCount: notifications.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final notification = notifications[index];
+                      return _NotificationTile(
+                        notification: notification,
+                        onTap: () => _openNotification(notification),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -127,6 +144,22 @@ class _NotificationTile extends StatelessWidget {
     }
   }
 
+  Color get _iconColor {
+    switch (notification.type) {
+      case 'booking_confirmed':
+        return AppColors.primary;
+      case 'booking_cancelled':
+        return AppColors.danger;
+      case 'payment_received':
+        return AppColors.info;
+      case 'booking_reminder':
+      case 'payment_reminder':
+        return AppColors.warning;
+      default:
+        return AppColors.textMuted;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isRead = notification.isRead;
@@ -147,9 +180,12 @@ class _NotificationTile extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: _iconColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
               alignment: Alignment.center,
-              child: Icon(_icon, size: 20, color: AppColors.primary),
+              child: Icon(_icon, size: 20, color: _iconColor),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -158,17 +194,28 @@ class _NotificationTile extends StatelessWidget {
                 children: [
                   Text(
                     notification.title ?? 'Notifikasi',
-                    style: const TextStyle(color: AppColors.text, fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      color: AppColors.text,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     notification.message ?? '',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5, height: 1.35),
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12.5,
+                      height: 1.35,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     formatRelativeTime(notification.createdAt),
-                    style: const TextStyle(color: AppColors.textFaint, fontSize: 11),
+                    style: const TextStyle(
+                      color: AppColors.textFaint,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
@@ -179,7 +226,10 @@ class _NotificationTile extends StatelessWidget {
                 width: 8,
                 height: 8,
                 margin: const EdgeInsets.only(top: 4),
-                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
               ),
             ],
           ],
