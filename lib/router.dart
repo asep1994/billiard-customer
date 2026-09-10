@@ -11,6 +11,8 @@ import 'screens/booking/pilih_tanggal_jam_screen.dart';
 import 'screens/booking/ringkasan_booking_screen.dart';
 import 'screens/bookings/booking_detail_screen.dart';
 import 'screens/home/home_shell.dart';
+import 'screens/legal/privacy_policy_screen.dart';
+import 'screens/legal/terms_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
@@ -40,6 +42,8 @@ final router = GoRouter(
     GoRoute(path: '/promotions', builder: (context, state) => const PromotionsScreen()),
     GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
     GoRoute(path: '/profile/edit', builder: (context, state) => const EditProfileScreen()),
+    GoRoute(path: '/legal/terms', builder: (context, state) => const TermsScreen()),
+    GoRoute(path: '/legal/privacy', builder: (context, state) => const PrivacyPolicyScreen()),
     GoRoute(
       path: '/venues/:id',
       builder: (context, state) => VenueDetailScreen(venueId: int.parse(state.pathParameters['id']!)),

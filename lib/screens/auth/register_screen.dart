@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +30,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _formError;
   Map<String, List<String>> _fieldErrors = {};
 
+  late final TapGestureRecognizer _termsTap;
+  late final TapGestureRecognizer _privacyTap;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsTap = TapGestureRecognizer()..onTap = () => context.push('/legal/terms');
+    _privacyTap = TapGestureRecognizer()..onTap = () => context.push('/legal/privacy');
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -36,6 +47,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
+    _termsTap.dispose();
+    _privacyTap.dispose();
     super.dispose();
   }
 
@@ -173,22 +186,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           value: _acceptedTerms,
                           onChanged: (value) => setState(() => _acceptedTerms = value ?? false),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Padding(
-                            padding: EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.only(top: 12),
                             child: Text.rich(
                               TextSpan(
-                                style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                                style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                                 children: [
-                                  TextSpan(text: 'Saya menyetujui '),
+                                  const TextSpan(text: 'Saya menyetujui '),
                                   TextSpan(
                                     text: 'Syarat & Ketentuan',
-                                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                    recognizer: _termsTap,
                                   ),
-                                  TextSpan(text: ' dan '),
+                                  const TextSpan(text: ' dan '),
                                   TextSpan(
                                     text: 'Kebijakan Privasi',
-                                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600),
+                                    recognizer: _privacyTap,
                                   ),
                                 ],
                               ),
