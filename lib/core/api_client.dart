@@ -38,36 +38,49 @@ String apiOrigin() => 'http://${_apiHost()}:8000';
 /// and translates Laravel's error JSON into an [ApiException].
 class ApiClient {
   ApiClient({String? baseUrl, TokenStorage? storage})
-      : _storage = storage ?? TokenStorage(),
-        _dio = Dio(BaseOptions(
+    : _storage = storage ?? TokenStorage(),
+      _dio = Dio(
+        BaseOptions(
           baseUrl: baseUrl ?? _defaultBaseUrl(),
           connectTimeout: const Duration(seconds: 15),
           receiveTimeout: const Duration(seconds: 15),
           headers: {'Accept': 'application/json'},
-        )) {
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _storage.read();
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        handler.next(options);
-      },
-    ));
+        ),
+      ) {
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _storage.read();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+      ),
+    );
   }
 
   final Dio _dio;
   final TokenStorage _storage;
 
-  Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? query}) async {
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
     return _send(() => _dio.get(path, queryParameters: query));
   }
 
-  Future<Map<String, dynamic>> post(String path, {Map<String, dynamic>? data}) async {
+  Future<Map<String, dynamic>> post(
+    String path, {
+    Map<String, dynamic>? data,
+  }) async {
     return _send(() => _dio.post(path, data: data));
   }
 
-  Future<Map<String, dynamic>> put(String path, {Map<String, dynamic>? data}) async {
+  Future<Map<String, dynamic>> put(
+    String path, {
+    Map<String, dynamic>? data,
+  }) async {
     return _send(() => _dio.put(path, data: data));
   }
 
@@ -75,7 +88,9 @@ class ApiClient {
     return _send(() => _dio.delete(path));
   }
 
-  Future<Map<String, dynamic>> _send(Future<Response> Function() request) async {
+  Future<Map<String, dynamic>> _send(
+    Future<Response> Function() request,
+  ) async {
     try {
       final response = await request();
       if (response.data == null || response.data is! Map<String, dynamic>) {
@@ -106,12 +121,17 @@ class ApiClient {
 
       return ApiException(
         statusCode: response?.statusCode,
-        message: (message != null && message.isNotEmpty) ? message : _fallbackMessage(error),
+        message: (message != null && message.isNotEmpty)
+            ? message
+            : _fallbackMessage(error),
         errors: errors,
       );
     }
 
-    return ApiException(statusCode: response?.statusCode, message: _fallbackMessage(error));
+    return ApiException(
+      statusCode: response?.statusCode,
+      message: _fallbackMessage(error),
+    );
   }
 
   String _fallbackMessage(DioException error) {

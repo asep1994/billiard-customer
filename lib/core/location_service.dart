@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 
 /// Wraps geolocator with graceful fallbacks: any permission denial, disabled
@@ -14,13 +16,23 @@ class LocationService {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         return null;
       }
 
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
-      ).timeout(const Duration(seconds: 8));
+      try {
+        return await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+          ),
+        ).timeout(const Duration(seconds: 8));
+      } on TimeoutException {
+        // A fresh fix can take a while (or never arrive, e.g. some
+        // emulators/indoor GPS) - a recent cached fix is still far more
+        // useful than nothing for "nearest venue" sorting.
+        return await Geolocator.getLastKnownPosition();
+      }
     } catch (_) {
       return null;
     }
