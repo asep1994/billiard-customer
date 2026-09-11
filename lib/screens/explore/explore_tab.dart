@@ -10,9 +10,9 @@ import '../../models/venue.dart';
 import '../../providers/auth_provider.dart';
 import '../../repositories/nearby_place_repository.dart';
 import '../../repositories/venue_repository.dart';
-import '../../widgets/eight_ball_icon.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/venue_card.dart';
+import '../../widgets/venue_placeholder_image.dart';
 
 enum ExploreQuickFilter { none, nearest, topRated, openNow }
 
@@ -382,7 +382,14 @@ class _NearbyPlaceCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const EightBallIcon(size: 44),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: VenuePlaceholderImage(seed: place.name),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

@@ -8,14 +8,29 @@ import '../../models/billiard_table.dart';
 import '../../models/venue.dart';
 import '../../repositories/booking_repository.dart';
 import '../../repositories/config_repository.dart';
-import '../../widgets/eight_ball_icon.dart';
 import '../../widgets/primary_button.dart';
+import '../../widgets/venue_placeholder_image.dart';
 import '../payment/payment_webview_screen.dart';
 
 const _paymentMethods = [
-  {'value': 'M2', 'label': 'QRIS', 'description': 'Semua aplikasi e-wallet', 'icon': Icons.qr_code},
-  {'value': 'BT', 'label': 'Transfer Bank', 'description': 'BCA, Mandiri, BNI, BRI, dll', 'icon': Icons.account_balance},
-  {'value': 'VC', 'label': 'Kartu Kredit/Debit', 'description': 'Visa, Mastercard, JCB', 'icon': Icons.credit_card},
+  {
+    'value': 'M2',
+    'label': 'QRIS',
+    'description': 'Semua aplikasi e-wallet',
+    'icon': Icons.qr_code,
+  },
+  {
+    'value': 'BT',
+    'label': 'Transfer Bank',
+    'description': 'BCA, Mandiri, BNI, BRI, dll',
+    'icon': Icons.account_balance,
+  },
+  {
+    'value': 'VC',
+    'label': 'Kartu Kredit/Debit',
+    'description': 'Visa, Mastercard, JCB',
+    'icon': Icons.credit_card,
+  },
 ];
 
 class RingkasanBookingScreen extends StatefulWidget {
@@ -46,9 +61,11 @@ class RingkasanBookingScreen extends StatefulWidget {
 
   /// The Jakarta wall-clock instant to show in the UI - a plain local
   /// DateTime, never sent to the API directly.
-  DateTime get displayStart => DateTime(date.year, date.month, date.day, startHour);
+  DateTime get displayStart =>
+      DateTime(date.year, date.month, date.day, startHour);
 
-  DateTime get displayEnd => DateTime(date.year, date.month, date.day, startHour + duration);
+  DateTime get displayEnd =>
+      DateTime(date.year, date.month, date.day, startHour + duration);
 
   @override
   State<RingkasanBookingScreen> createState() => _RingkasanBookingScreenState();
@@ -87,17 +104,28 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
         venueId: widget.venue.id,
         billiardTableId: widget.table.id,
         start: jakartaWallClockToApiInstant(widget.date, widget.startHour, 0),
-        end: jakartaWallClockToApiInstant(widget.date, widget.startHour + widget.duration, 0),
+        end: jakartaWallClockToApiInstant(
+          widget.date,
+          widget.startHour + widget.duration,
+          0,
+        ),
         promoCode: _promoController.text.trim(),
       );
 
-      final paymentUrl = await _bookingRepository.pay(bookingId: booking.id, paymentMethod: _paymentMethod);
+      final paymentUrl = await _bookingRepository.pay(
+        bookingId: booking.id,
+        paymentMethod: _paymentMethod,
+      );
 
       if (paymentUrl != null && mounted) {
         await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => PaymentWebViewScreen(paymentUrl: paymentUrl)),
+          MaterialPageRoute(
+            builder: (_) => PaymentWebViewScreen(paymentUrl: paymentUrl),
+          ),
         );
-        await _bookingRepository.refreshPayment(booking.id).catchError((_) => booking);
+        await _bookingRepository
+            .refreshPayment(booking.id)
+            .catchError((_) => booking);
       }
 
       if (mounted) context.pushReplacement('/bookings/${booking.id}');
@@ -120,7 +148,8 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
         builder: (context, snapshot) {
           final serviceFee = snapshot.data ?? 0;
           final total = widget.price + serviceFee;
-          final isLoadingFee = snapshot.connectionState == ConnectionState.waiting;
+          final isLoadingFee =
+              snapshot.connectionState == ConnectionState.waiting;
 
           return Column(
             children: [
@@ -146,9 +175,13 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
                                   ? Image.network(
                                       widget.venue.photoUrl!,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => const _CoverFallback(),
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              _CoverFallback(
+                                                seed: widget.venue.name,
+                                              ),
                                     )
-                                  : const _CoverFallback(),
+                                  : _CoverFallback(seed: widget.venue.name),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -158,12 +191,20 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
                               children: [
                                 Text(
                                   widget.venue.name,
-                                  style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600),
+                                  style: const TextStyle(
+                                    color: AppColors.text,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  widget.venue.address ?? widget.venue.city ?? '-',
-                                  style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
+                                  widget.venue.address ??
+                                      widget.venue.city ??
+                                      '-',
+                                  style: const TextStyle(
+                                    color: AppColors.textFaint,
+                                    fontSize: 12,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -175,12 +216,30 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
                     ),
                     const SizedBox(height: 20),
                     _SummaryRow(label: 'Meja', value: widget.table.name),
-                    _SummaryRow(label: 'Tanggal', value: formatDate(widget.displayStart)),
-                    _SummaryRow(label: 'Waktu', value: formatTimeRange(widget.displayStart, widget.displayEnd)),
-                    _SummaryRow(label: 'Durasi', value: '${widget.duration} Jam'),
+                    _SummaryRow(
+                      label: 'Tanggal',
+                      value: formatDate(widget.displayStart),
+                    ),
+                    _SummaryRow(
+                      label: 'Waktu',
+                      value: formatTimeRange(
+                        widget.displayStart,
+                        widget.displayEnd,
+                      ),
+                    ),
+                    _SummaryRow(
+                      label: 'Durasi',
+                      value: '${widget.duration} Jam',
+                    ),
                     const Divider(height: 28),
-                    _SummaryRow(label: 'Harga / Jam', value: formatCurrency(widget.table.hourlyRate)),
-                    _SummaryRow(label: 'Subtotal', value: formatCurrency(widget.price)),
+                    _SummaryRow(
+                      label: 'Harga / Jam',
+                      value: formatCurrency(widget.table.hourlyRate),
+                    ),
+                    _SummaryRow(
+                      label: 'Subtotal',
+                      value: formatCurrency(widget.price),
+                    ),
                     _SummaryRow(
                       label: 'Biaya Layanan',
                       value: isLoadingFee ? '...' : formatCurrency(serviceFee),
@@ -196,24 +255,39 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
                       controller: _promoController,
                       textCapitalization: TextCapitalization.characters,
                       style: const TextStyle(color: AppColors.text),
-                      decoration: const InputDecoration(labelText: 'Kode Promo (opsional)', hintText: 'DISKON20'),
+                      decoration: const InputDecoration(
+                        labelText: 'Kode Promo (opsional)',
+                        hintText: 'DISKON20',
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    const Text('Metode Pembayaran', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text)),
+                    const Text(
+                      'Metode Pembayaran',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.text,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     ..._paymentMethods.map((method) {
                       final selected = method['value'] == _paymentMethod;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 10),
                         child: InkWell(
-                          onTap: () => setState(() => _paymentMethod = method['value']! as String),
+                          onTap: () => setState(
+                            () => _paymentMethod = method['value']! as String,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: selected ? AppColors.primary : AppColors.border),
+                              border: Border.all(
+                                color: selected
+                                    ? AppColors.primary
+                                    : AppColors.border,
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -225,27 +299,43 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   alignment: Alignment.center,
-                                  child: Icon(method['icon']! as IconData, color: AppColors.primary, size: 20),
+                                  child: Icon(
+                                    method['icon']! as IconData,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         method['label']! as String,
-                                        style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w600, fontSize: 13),
+                                        style: const TextStyle(
+                                          color: AppColors.text,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
                                       ),
                                       Text(
                                         method['description']! as String,
-                                        style: const TextStyle(color: AppColors.textFaint, fontSize: 11),
+                                        style: const TextStyle(
+                                          color: AppColors.textFaint,
+                                          fontSize: 11,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
                                 Icon(
-                                  selected ? Icons.check_circle : Icons.circle_outlined,
-                                  color: selected ? AppColors.primary : AppColors.textFaint,
+                                  selected
+                                      ? Icons.check_circle
+                                      : Icons.circle_outlined,
+                                  color: selected
+                                      ? AppColors.primary
+                                      : AppColors.textFaint,
                                   size: 20,
                                 ),
                               ],
@@ -256,7 +346,13 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
                     }),
                     if (_error != null) ...[
                       const SizedBox(height: 8),
-                      Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+                      Text(
+                        _error!,
+                        style: const TextStyle(
+                          color: AppColors.danger,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -281,20 +377,22 @@ class _RingkasanBookingScreenState extends State<RingkasanBookingScreen> {
 }
 
 class _CoverFallback extends StatelessWidget {
-  const _CoverFallback();
+  const _CoverFallback({required this.seed});
+
+  final String seed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.primarySoft,
-      alignment: Alignment.center,
-      child: const EightBallIcon(size: 28),
-    );
+    return VenuePlaceholderImage(seed: seed);
   }
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value, this.emphasize = false});
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.emphasize = false,
+  });
 
   final String label;
   final String value;
@@ -307,7 +405,10 @@ class _SummaryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
           Text(
             value,
             style: TextStyle(

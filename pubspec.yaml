@@ -79,6 +79,7 @@ flutter:
   # https://flutter.dev/to/resolution-aware-images
   assets:
     - assets/images/logo.png
+    - assets/images/venue_placeholders/
 
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package

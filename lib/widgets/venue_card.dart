@@ -3,12 +3,17 @@ import 'package:flutter/material.dart';
 import '../core/formatters.dart';
 import '../core/theme.dart';
 import '../models/venue.dart';
-import 'eight_ball_icon.dart';
+import 'venue_placeholder_image.dart';
 
 /// Horizontal venue list item: photo, rating, distance, address and price -
 /// used for the "Rekomendasi untuk kamu" list, Jelajah results and Favorit.
 class VenueCard extends StatelessWidget {
-  const VenueCard({super.key, required this.venue, required this.onTap, this.onFavoriteToggle});
+  const VenueCard({
+    super.key,
+    required this.venue,
+    required this.onTap,
+    this.onFavoriteToggle,
+  });
 
   final Venue venue;
   final VoidCallback onTap;
@@ -41,13 +46,14 @@ class VenueCard extends StatelessWidget {
                     ? Image.network(
                         venue.photoUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const _PhotoFallback(),
+                        errorBuilder: (context, error, stackTrace) =>
+                            _PhotoFallback(seed: venue.name),
                         loadingBuilder: (context, child, progress) {
                           if (progress == null) return child;
                           return const _PhotoFallback(loading: true);
                         },
                       )
-                    : const _PhotoFallback(),
+                    : _PhotoFallback(seed: venue.name),
               ),
             ),
             const SizedBox(width: 12),
@@ -61,7 +67,11 @@ class VenueCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           venue.name,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: AppColors.text),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: AppColors.text,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -73,9 +83,13 @@ class VenueCard extends StatelessWidget {
                           child: Padding(
                             padding: const EdgeInsets.all(2),
                             child: Icon(
-                              venue.isFavorited ? Icons.favorite : Icons.favorite_border,
+                              venue.isFavorited
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
                               size: 18,
-                              color: venue.isFavorited ? AppColors.danger : AppColors.textFaint,
+                              color: venue.isFavorited
+                                  ? AppColors.danger
+                                  : AppColors.textFaint,
                             ),
                           ),
                         ),
@@ -85,21 +99,54 @@ class VenueCard extends StatelessWidget {
                   Row(
                     children: [
                       if (venue.rating != null) ...[
-                        const Icon(Icons.star_rounded, size: 15, color: AppColors.warning),
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 15,
+                          color: AppColors.warning,
+                        ),
                         const SizedBox(width: 2),
                         Text(
                           venue.rating!.toStringAsFixed(1),
-                          style: const TextStyle(color: AppColors.text, fontSize: 12, fontWeight: FontWeight.w600),
+                          style: const TextStyle(
+                            color: AppColors.text,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        Text(' (${venue.reviewsCount})', style: const TextStyle(color: AppColors.textFaint, fontSize: 12)),
+                        Text(
+                          ' (${venue.reviewsCount})',
+                          style: const TextStyle(
+                            color: AppColors.textFaint,
+                            fontSize: 12,
+                          ),
+                        ),
                       ] else
-                        const Text('Belum ada rating', style: TextStyle(color: AppColors.textFaint, fontSize: 12)),
+                        const Text(
+                          'Belum ada rating',
+                          style: TextStyle(
+                            color: AppColors.textFaint,
+                            fontSize: 12,
+                          ),
+                        ),
                       if (venue.distanceKm != null) ...[
-                        const Text(' · ', style: TextStyle(color: AppColors.textFaint, fontSize: 12)),
-                        Icon(Icons.location_on, size: 13, color: AppColors.textFaint),
+                        const Text(
+                          ' · ',
+                          style: TextStyle(
+                            color: AppColors.textFaint,
+                            fontSize: 12,
+                          ),
+                        ),
+                        Icon(
+                          Icons.location_on,
+                          size: 13,
+                          color: AppColors.textFaint,
+                        ),
                         Text(
                           ' ${venue.distanceKm!.toStringAsFixed(1)} km',
-                          style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
+                          style: const TextStyle(
+                            color: AppColors.textFaint,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ],
@@ -107,7 +154,10 @@ class VenueCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     venue.address ?? venue.city ?? '-',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 12,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -115,7 +165,11 @@ class VenueCard extends StatelessWidget {
                   if (venue.priceFrom != null)
                     Text(
                       '${formatCurrency(venue.priceFrom!)} / jam',
-                      style: const TextStyle(color: AppColors.primary, fontSize: 13, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                 ],
               ),
@@ -128,28 +182,34 @@ class VenueCard extends StatelessWidget {
 }
 
 class _PhotoFallback extends StatelessWidget {
-  const _PhotoFallback({this.loading = false});
+  const _PhotoFallback({this.seed = '', this.loading = false});
 
+  final String seed;
   final bool loading;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primarySoft, AppColors.surface],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    if (loading) {
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.primarySoft, AppColors.surface],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-      ),
-      alignment: Alignment.center,
-      child: loading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-            )
-          : const EightBallIcon(size: 36),
-    );
+        alignment: Alignment.center,
+        child: const SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
+
+    return VenuePlaceholderImage(seed: seed);
   }
 }

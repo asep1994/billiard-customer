@@ -6,9 +6,9 @@ import '../../core/formatters.dart';
 import '../../core/theme.dart';
 import '../../models/booking.dart';
 import '../../repositories/booking_repository.dart';
-import '../../widgets/eight_ball_icon.dart';
 import '../../widgets/state_views.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/venue_placeholder_image.dart';
 
 class MyBookingsTab extends StatefulWidget {
   const MyBookingsTab({super.key});
@@ -145,7 +145,16 @@ class _BookingCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const EightBallIcon(size: 44),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: VenuePlaceholderImage(
+                  seed: booking.venueName ?? 'venue',
+                ),
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -164,17 +173,26 @@ class _BookingCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      StatusBadge(label: booking.statusLabel, status: booking.status),
+                      StatusBadge(
+                        label: booking.statusLabel,
+                        status: booking.status,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${booking.tableName ?? 'Meja'} · ${formatDate(booking.startTime)}',
-                    style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 13,
+                    ),
                   ),
                   Text(
                     formatTimeRange(booking.startTime, booking.endTime),
-                    style: const TextStyle(color: AppColors.textFaint, fontSize: 12),
+                    style: const TextStyle(
+                      color: AppColors.textFaint,
+                      fontSize: 12,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Row(

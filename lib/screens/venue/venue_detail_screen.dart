@@ -11,9 +11,9 @@ import '../../models/review.dart';
 import '../../models/venue.dart';
 import '../../repositories/review_repository.dart';
 import '../../repositories/venue_repository.dart';
-import '../../widgets/eight_ball_icon.dart';
 import '../../widgets/initials_avatar.dart';
 import '../../widgets/state_views.dart';
+import '../../widgets/venue_placeholder_image.dart';
 
 class VenueDetailScreen extends StatefulWidget {
   const VenueDetailScreen({super.key, required this.venueId});
@@ -158,9 +158,9 @@ class _CoverHeader extends StatelessWidget {
                   venue.photoUrl!,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) =>
-                      const _CoverFallback(),
+                      _CoverFallback(seed: venue.name),
                 )
-              : const _CoverFallback(),
+              : _CoverFallback(seed: venue.name),
           Positioned(
             top: topPadding + 12,
             left: 16,
@@ -200,21 +200,13 @@ class _CoverHeader extends StatelessWidget {
 }
 
 class _CoverFallback extends StatelessWidget {
-  const _CoverFallback();
+  const _CoverFallback({required this.seed});
+
+  final String seed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primaryDark, AppColors.bg],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      alignment: Alignment.center,
-      child: const EightBallIcon(size: 72),
-    );
+    return VenuePlaceholderImage(seed: seed);
   }
 }
 
